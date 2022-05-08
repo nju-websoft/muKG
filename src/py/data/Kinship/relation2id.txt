@@ -1,0 +1,26 @@
+25
+term25	0
+term6	1
+term19	2
+term1	3
+term18	4
+term21	5
+term14	6
+term11	7
+term7	8
+term3	9
+term22	10
+term15	11
+term20	12
+term10	13
+term13	14
+term9	15
+term24	16
+term8	17
+term17	18
+term12	19
+term4	20
+term16	21
+term5	22
+term0	23
+term2	24

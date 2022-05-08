@@ -1,0 +1,3 @@
+2
+locatedin	0
+neighbor	1
