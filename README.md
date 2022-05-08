@@ -1,5 +1,5 @@
 <div align=center>
-<img src="https://github.com/nju-websoft/muKG/blob/master/figs/logo.png" width="375" style="zoom:15%;" />
+<img src="https://github.com/nju-websoft/muKG/blob/main/figs/logo.png" width="375" style="zoom:15%;" />
 </div>
 
 
@@ -38,7 +38,7 @@
 
 We use  [Python](https://www.python.org/) ,  [Tensorflow](https://www.tensorflow.org/) and [PyTorch](https://pytorch.org/) to develop the basic framework of **μKG**.  And using [RAY](https://www.ray.io/) for distributed training. The software architecture is illustrated in the following Figure. 
 
-![image-20220507103409697](https://github.com/nju-websoft/muKG/blob/master/figs/system.png)
+![image-20220507103409697](https://github.com/nju-websoft/muKG/blob/main/figs/system.png)
 
 
 Compared with other existing KG systems, μKG has the following competitive features.
@@ -262,7 +262,7 @@ The subgraph sampler is to support GNN-based embedding models like GCN-Align and
 
 We use [Ray](https://www.ray.io/) to provide a uniform and easy-to-use interface for multi-GPU and multi-processing computation. The following figure shows our Ray-based implementation for parallel computing and the code snippet to use it. Users can set the number of CPUs or GPUs used for model training.
 
-![image-20220507172436866](https://github.com/nju-websoft/muKG/blob/master/figs/ray.png)
+![image-20220507172436866](https://github.com/nju-websoft/muKG/blob/main/figs/ray.png)
 
 To use the following command line to train your model with multi-GPU and multi-processing. Firstly check the number of resources on your machine (GPU or CPU), and then specify the number of parallels. The system will automatically allocate resources for each worker working in parallel. 
 
@@ -275,7 +275,7 @@ python main_args.py -t lp -m transe -o train -d data/FB15K -r gpu:2 -w 2
 We give the evaluation results of the efficiency of the proposed library μKG here. The experiments were conducted on a server with an Intel Xeon Gold 6240 2.6GHz CPU, 512GB of memory and four NVIDIA Tesla V100 GPUs. The following figure compares the training time of RotatE and ConvE on FB15K-237 when using different numbers of GPUs. 
 
 <div align=center>
-<img src="https://github.com/nju-websoft/muKG/blob/master/figs/time.png" width="500" alt="image-20220508150812794" style="zoom: 50%;" />
+<img src="https://github.com/nju-websoft/muKG/blob/main/figs/time.png" width="500" alt="image-20220508150812794" style="zoom: 50%;" />
 </div>
 
 ## License
