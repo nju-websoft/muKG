@@ -1,7 +1,7 @@
 import time
 import tensorflow as tf
 
-from src.py.base.initializers import init_embeddings_v2, init_embeddings
+from src.py.base.initializers import init_embeddings
 from src.py.base.losses import get_loss_func_tf, get_loss_func_tfv2
 
 tf.compat.v1.enable_eager_execution()

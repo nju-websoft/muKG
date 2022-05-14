@@ -3,12 +3,12 @@
   	"output": "../../output/results/",
   	"dataset_division": "721_5fold/1/",
 
-  	"embedding_module": "IPTransE",
+  	"embedding_module": "IPtransE",
   	"alignment_module": "sharing",
 	"search_module": "greedy",
 	  
     "dim": 100,
-  	"init": "normal",
+  	"init": "xavier",
 	"ent_l2_norm": true,
 	"rel_l2_norm": true,
 	"loss_norm": "L2",
@@ -34,6 +34,7 @@
 	"eval_metric": "inner",
 	"csls": 10,
 	"top_k": [1, 5, 10, 50],
+	"no_early": true,
 	"is_save": true,
 	"eval_norm": false,
 

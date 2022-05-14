@@ -8,7 +8,7 @@
 	"search_module": "greedy",
 
     "dim": 300,
-  "margin":1,
+  	"margin":1,
 	"neg_sampling": "uniform",
 	"neg_triple_num": 1000,
 
@@ -26,6 +26,7 @@
 	"eval_metric": "manhattan",
 	"csls": 10,
 	"top_k": [1, 5, 10, 50],
+	"no_early": true,
 	"is_save": true,
 	"eval_norm": false,
 

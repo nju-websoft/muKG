@@ -16,14 +16,13 @@ from ...py.util.util import to_var
 
 class TransR(BasicModel):
 
-    def __init__(self, kgs, args, dim_e=100, dim_r=100, p_norm=1, norm_flag=True, rand_init=True, margin=None):
+    def __init__(self, kgs, args):
         super(TransR, self).__init__(args, kgs)
-        self.dim_e = dim_e
-        self.dim_r = dim_r
+        self.dim_e = self.args.dim
+        self.dim_r = self.args.dim
         self.projected = False
-        self.norm_flag = norm_flag
+        self.norm_flag = self.args.ent_l2_norm
         self.p_norm = 1
-        self.rand_init = rand_init
         self.projected_entities = Parameter(empty(size=(self.rel_tot,
                                                         self.ent_tot,
                                                         self.dim_r)),
@@ -31,26 +30,9 @@ class TransR(BasicModel):
         self.ent_embeddings = nn.Embedding(self.ent_tot, self.dim_e)
         self.rel_embeddings = nn.Embedding(self.rel_tot, self.dim_r)
         self.transfer_matrix = nn.Embedding(self.rel_tot, self.dim_e * self.dim_r)
-        if self.args.init == 'xavier':
-            nn.init.xavier_uniform_(self.ent_embeddings.weight.data)
-            nn.init.xavier_uniform_(self.rel_embeddings.weight.data)
-            nn.init.xavier_uniform_(self.transfer_matrix.weight.data)
-        else:
-            std = 1.0 / math.sqrt(self.args.dim)
-            nn.init.normal_(self.ent_embeddings.weight.data, 0, std)
-            nn.init.normal_(self.rel_embeddings.weight.data, 0, std)
-            nn.init.normal_(self.transfer_matrix.weight.data, 0, std)
-        """
-        if not self.rand_init:
-            identity = torch.zeros(self.dim_e, self.dim_r)
-            for i in range(min(self.dim_e, self.dim_r)):
-                identity[i][i] = 1
-            identity = identity.view(self.dim_r * self.dim_e)
-            for i in range(self.rel_tot):
-                self.transfer_matrix.weight.data[i] = identity
-        else:
-            nn.init.xavier_uniform_(self.transfer_matrix.weight.data)
-        """
+        nn.init.xavier_uniform_(self.ent_embeddings.weight.data)
+        nn.init.xavier_uniform_(self.rel_embeddings.weight.data)
+        nn.init.xavier_uniform_(self.transfer_matrix.weight.data)
 
     def calc(self, h, t, r):
         h = F.normalize(h, 2, -1)

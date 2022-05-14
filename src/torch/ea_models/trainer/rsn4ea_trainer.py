@@ -10,7 +10,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
-import tensorflow as tf
 # from sklearn import preprocessing
 from torch.autograd import Variable
 import pandas as pd
@@ -230,8 +229,9 @@ class rsn4ea_trainer(align_model_trainer):
 
         data = np.concatenate(rts, axis=1)
         data = pd.DataFrame(data)
-        a = data.to_csv('D:/OPENEA-pytorch/pretrain/train.csv')
         self._train_data = data
+        print("save paths to:", '%spaths_%.1f_%.1f' % (opts.data_path, opts.alpha, opts.beta))
+        data.to_csv('%spaths_%.1f_%.1f' % (opts.data_path, opts.alpha, opts.beta))
 
     def init(self, args, kgs):
         self.args = args
@@ -240,20 +240,23 @@ class rsn4ea_trainer(align_model_trainer):
             self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         else:
             self.device = torch.device('cpu')
-        self.model = RSN4EA(kgs, args)
-        self.model.to(self.device)
         self._options = opts = self.args
         opts.data_path = opts.training_data
 
         self.read(data_path=self._options.data_path)
 
-        sequence_datapath = 'D:/OPENEA-pytorch/pretrain/train.csv'
+        sequence_datapath = '%spaths_%.1f_%.1f' % (
+            self._options.data_path, self._options.alpha, self._options.beta)
 
         if not os.path.exists(sequence_datapath):
             self.sample_paths()
         else:
             print('load existing training sequences')
-            self._train_data = pd.read_csv('D:/OPENEA-pytorch/pretrain/train.csv', index_col=0)
+            self._train_data = pd.read_csv('%spaths_%.1f_%.1f' % (
+                self._options.data_path, self._options.alpha, self._options.beta), index_col=0)
+        self.model = RSN4EA(kgs, args)
+        self.model.initial(self._ent_num, self._rel_num)
+        self.model.to(self.device)
 
     # training procedure
     def seq_train(self, data, choices=None, epoch=None):
@@ -283,7 +286,6 @@ class rsn4ea_trainer(align_model_trainer):
 
     def run(self):
         t = time.time()
-        self.model.initial(self._ent_num, self._rel_num)
         self.optimizer = get_optimizer_torch(self.args.optimizer, self.model, self.args.learning_rate)
         train_data = self._train_data
         for i in range(1, self.args.max_epoch + 1):
@@ -293,6 +295,8 @@ class rsn4ea_trainer(align_model_trainer):
             if i >= self.args.start_valid and i % self.args.eval_freq == 0:
                 flag = self.model.valid(self.args.stop_metric)
                 self.flag1, self.flag2, self.early_stop = early_stop(self.flag1, self.flag2, flag)
-                if i >= 500:
+                if self.args.no_early:
+                    self.early_stop = False
+                if self.early_stop or i == self.args.max_epoch:
                     break
         print("Training ends. Total time = {:.3f} s.".format(time.time() - t))

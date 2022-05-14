@@ -22,6 +22,7 @@ class ModelFamily_tf(object):
         from src.tf.ea_models.gcn_align import GCN_Align
         from src.tf.ea_models.iptranse import IPTransE
         from src.tf.ea_models.jape import JAPE
+        from src.tf.ea_models.rsn4ea import RSN4EA
 
         if model_name == 'AttrE':
             return AttrE()
@@ -41,10 +42,12 @@ class ModelFamily_tf(object):
             return RDGCN()
         elif model_name == 'SEA':
             return SEA()
+        elif model_name == 'RSN4EA':
+            return RSN4EA()
 
         from src.tf.kge_models.Analogy import Analogy
-        from src.tf.kge_models.TransE import TransE
-        from src.tf.kge_models.TransH import TransH
+        from src.tf.kge_models.transe import TransE
+        from src.tf.kge_models.transh import TransH
         """
         from src.tf.kge_models.ComplEx import ComplEx
         from src.tf.kge_models.DistMult import DistMult
@@ -187,6 +190,8 @@ class kge_models:
             mf = ModelFamily_torch(self.args, self.kgs)
             self.args.is_torch = True
             mod = mf.infer_model(model_name)
+            if mod is None:
+                raise Exception("Invalid input symbol or this version of the model is not implemented yet!")
             if self.args.is_parallel:
                 self.model = parallel_trainer()
             else:
@@ -197,6 +202,8 @@ class kge_models:
             mf = ModelFamily_tf(self.args, self.kgs)
             self.args.is_torch = False
             mod = mf.infer_model(model_name)
+            if mod is None:
+                raise Exception("Invalid input symbol or this version of the model is not implemented yet!")
             self.model = kge_trainer()
             self.model.init(self.args, self.kgs, mod)
 
@@ -225,11 +232,15 @@ class ea_models:
             mf = ModelFamily_torch(self.args, self.kgs)
             self.args.is_torch = True
             self.model = mf.infer_model(model_name)
+            if self.model is None:
+                raise Exception("Invalid input symbol or this version of the model is not implemented yet!")
             self.model.init(self.args, self.kgs)
         else:
             mf = ModelFamily_tf(self.args, self.kgs)
             self.args.is_torch = False
             self.model = mf.infer_model(model_name)
+            if self.model is None:
+                raise Exception("Invalid input symbol or this version of the model is not implemented yet!")
             self.model.set_args(self.args)
             self.model.set_kgs(self.kgs)
             self.model.init()
@@ -261,12 +272,16 @@ class et_models:
             mf = ModelFamily_torch(self.args, self.kgs)
             self.args.is_torch = True
             mod = mf.infer_model(model_name)
+            if mod is None:
+                raise Exception("Invalid input symbol or this version of the model is not implemented yet!")
             self.model = et_trainer()
             self.model.init(self.args, self.kgs, mod)
         else:
             mf = ModelFamily_tf(self.args, self.kgs)
             self.args.is_torch = False
             self.model = getattr(mf, model_name)
+            if self.model is None:
+                raise Exception("Invalid input symbol or this version of the model is not implemented yet!")
             self.model.set_args(self.args)
             self.model.set_kgs(self.kgs)
             self.model.init()

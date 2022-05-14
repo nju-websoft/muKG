@@ -1,27 +1,11 @@
-import math
-import multiprocessing as mp
 import random
-import time
-import os
-import itertools
-import random
-import time
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
-# from sklearn import preprocessing
-from torch.autograd import Variable
-
-import src.modules.finding.evaluation as evaluation
-import src.modules.load.read as read
-from src.loss.nce_loss import NCELoss
-from src.models.basic_model import BasicModel
-from src.modules.load.kg import KG
-from src.modules.load.kgs import KGs
-from src.trainer.util import get_optimizer, to_tensor
-import pandas as pd
-from scipy.sparse import csr_matrix
+from src.py.evaluation.evaluation import test, valid
+from src.py.util.util import to_tensor
+from src.torch.kge_models.basic_model import BasicModel
 
 
 class RSN4EA(BasicModel):
@@ -70,7 +54,11 @@ class RSN4EA(BasicModel):
             # nonlinearity=nn.Identity()
         )
         self.ent_embeds, self.rel_embeds = self._entity_embedding, self._relation_embedding
-        self.bn = nn.BatchNorm1d(hidden_size)
+        self.bn = nn.BatchNorm1d(
+            num_features=hidden_size,
+            affine=True,
+        ).train()
+        #self.bn = nn.BatchNorm1d(hidden_size)
         self.entity_w, self._entity_b = self._ent_w, self._ent_b
 
     def sampled_loss_rel(self, inputs, labels, weight=1):
@@ -79,7 +67,7 @@ class RSN4EA(BasicModel):
         batch_size = inputs.shape[0]
         result = []
         num = list(range(self._rel_num))
-        neg = to_tensor(random.sample(num, batch_size * inputs.shape[1]))
+        neg = to_tensor(random.sample(num, batch_size * inputs.shape[1]), self.device)
         # neg_attr1 = neg_attr1.view(batch_size, -1, 1)
         neg = neg.view(batch_size, -1)
         pos2 = self._rel_w(labels).permute(0, 2, 1)
@@ -95,7 +83,7 @@ class RSN4EA(BasicModel):
         batch_size = inputs.shape[0]
         result = []
         num = list(range(self._ent_num))
-        neg = to_tensor(random.sample(num, batch_size * inputs.shape[1]))
+        neg = to_tensor(random.sample(num, batch_size * inputs.shape[1]), self.device)
         # neg_attr1 = neg_attr1.view(batch_size, -1, 1)
         neg = neg.view(batch_size, -1)
         pos2 = self._ent_w(labels).permute(0, 2, 1)
@@ -178,7 +166,7 @@ class RSN4EA(BasicModel):
             losses = []
 
             masks = np.random.choice([0., 1.0], size=batch_size, p=[0.5, 0.5])
-            weight = to_tensor(masks)
+            weight = to_tensor(masks, self.device)
             for i, output in enumerate(bn_outputs):
                 if i % 2 == 0:
                     losses.append(self.sampled_loss_rel(
@@ -197,9 +185,9 @@ class RSN4EA(BasicModel):
 
     # build the main graph
     def tests(self, entities1, entities2):
-        seed_entity1 = self.ent_embeds(to_tensor(entities1))
-        seed_entity2 = self.ent_embeds(to_tensor(entities2))
-        _, _, _, sim_list = evaluation.test(seed_entity1.detach().numpy(), seed_entity2.detach().numpy(), None,
+        seed_entity1 = self.ent_embeds(to_tensor(entities1, self.device))
+        seed_entity2 = self.ent_embeds(to_tensor(entities2, self.device))
+        _, _, _, sim_list = test(seed_entity1.cpu().detach().numpy(), seed_entity2.cpu().detach().numpy(), None,
                                             self.args.top_k, self.args.test_threads_num, metric=self.args.eval_metric,
                                             normalize=self.args.eval_norm,
                                             csls_k=0, accurate=True)
@@ -208,12 +196,12 @@ class RSN4EA(BasicModel):
 
     def valid(self, stop_metric):
         if len(self.kgs.valid_links) > 0:
-            seed_entity1 = self.ent_embeds(to_tensor(self.kgs.valid_entities1))
-            seed_entity2 = self.ent_embeds(to_tensor(self.kgs.valid_entities2))
+            seed_entity1 = self.ent_embeds(to_tensor(self.kgs.valid_entities1, self.device))
+            seed_entity2 = self.ent_embeds(to_tensor(self.kgs.valid_entities2, self.device))
         else:
-            seed_entity1 = F.normalize(self.ent_embeds(to_tensor(self.kgs.test_entities1)), 2, -1)
-            seed_entity2 = F.normalize(self.ent_embeds(to_tensor(self.kgs.test_entities2)), 2, -1)
-        hits1_12, mrr_12 = evaluation.valid(seed_entity1.detach().numpy(), seed_entity2.detach().numpy(), None,
+            seed_entity1 = F.normalize(self.ent_embeds(to_tensor(self.kgs.test_entities1, self.device)), 2, -1)
+            seed_entity2 = F.normalize(self.ent_embeds(to_tensor(self.kgs.test_entities2, self.device)), 2, -1)
+        hits1_12, mrr_12 = valid(seed_entity1.cpu().detach().numpy(), seed_entity2.cpu().detach().numpy(), None,
                                             self.args.top_k, self.args.test_threads_num, metric=self.args.eval_metric,
                                             normalize=self.args.eval_norm, csls_k=0, accurate=False)
         return hits1_12 if stop_metric == 'hits1' else mrr_12

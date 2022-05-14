@@ -31,7 +31,7 @@ if __name__ == '__main__':
             model_name = opt_value
         if opt_name == '-o':
             if opt_value == 'test':
-                is_train = opt_value
+                is_train = False
         if opt_name == '-d':
             dataset = opt_value + '/'
         if opt_name == '-r':

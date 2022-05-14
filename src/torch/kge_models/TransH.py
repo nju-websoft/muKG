@@ -15,17 +15,17 @@ from src.torch.kge_models.basic_model import BasicModel
 
 class TransH(BasicModel):
 
-    def __init__(self, kgs, args, dim=100, p_norm=1, norm_flag=True, margin=None, epsilon=None):
+    def __init__(self, kgs, args):
         super(TransH, self).__init__(args, kgs)
 
         self.evaluated_projections = False
-        self.dim = dim
+        self.dim = self.args.dim
         self.margin = nn.Parameter(
-    			torch.Tensor([self.args.margin]), 
-    			requires_grad=False
-    		)
+            torch.Tensor([self.args.margin]),
+            requires_grad=False
+        )
         self.epsilon = 2.0
-        self.norm_flag = norm_flag
+        self.norm_flag = self.args.ent_l2_norm
         self.p_norm = 1
         self.projected = False
         self.ent_embeddings = nn.Embedding(self.ent_tot, self.dim)
@@ -35,41 +35,24 @@ class TransH(BasicModel):
                                                         self.ent_tot,
                                                         self.dim)),
                                             requires_grad=False)
-        if self.args.init == 'xavier':
-            nn.init.xavier_uniform_(self.ent_embeddings.weight.data)
-            nn.init.xavier_uniform_(self.rel_embeddings.weight.data)
-            nn.init.xavier_uniform_(self.norm_vector.weight.data)
-        elif self.args.init == 'normal':
-            std = 1.0 / math.sqrt(self.args.dim)
-            nn.init.normal_(self.ent_embeds.weight.data, 0, std)
-            nn.init.normal_(self.rel_embeds.weight.data, 0, std)
-            nn.init.normal_(self.norm_vector.weight.data, 0, std)
-        elif self.args.init == 'uniform':
-            self.embedding_range = nn.Parameter(
-                torch.Tensor([(self.margin + self.epsilon) / self.dim]), requires_grad=False
-            )
-            nn.init.uniform_(
-                tensor=self.ent_embeddings.weight.data,
-                a=-self.embedding_range.item(),
-                b=self.embedding_range.item()
-            )
-            nn.init.uniform_(
-                tensor=self.rel_embeddings.weight.data,
-                a=-self.embedding_range.item(),
-                b=self.embedding_range.item()
-            )
-            nn.init.uniform_(
-                tensor=self.norm_vector.weight.data,
-                a=-self.embedding_range.item(),
-                b=self.embedding_range.item()
-            )
-
-        '''if margin is not None:
-            self.margin = nn.Parameter(torch.Tensor([margin]))
-            self.margin.requires_grad = False
-            self.margin_flag = True
-        else:
-            self.margin_flag = False'''
+        self.embedding_range = nn.Parameter(
+            torch.Tensor([(self.margin + self.epsilon) / self.dim]), requires_grad=False
+        )
+        nn.init.uniform_(
+            tensor=self.ent_embeddings.weight.data,
+            a=-self.embedding_range.item(),
+            b=self.embedding_range.item()
+        )
+        nn.init.uniform_(
+            tensor=self.rel_embeddings.weight.data,
+            a=-self.embedding_range.item(),
+            b=self.embedding_range.item()
+        )
+        nn.init.uniform_(
+            tensor=self.norm_vector.weight.data,
+            a=-self.embedding_range.item(),
+            b=self.embedding_range.item()
+        )
 
     def calc(self, h, r, t):
         '''h = F.normalize(h, 2, -1)
@@ -112,7 +95,7 @@ class TransH(BasicModel):
     def get_score(self, h, r, t):
         return self.calc(h, r, t)
 
-    def get_embeddings(self, hid, rid, tid, mode = 'entity'):
+    def get_embeddings(self, hid, rid, tid, mode='entity'):
         h = to_var(hid, self.device)
         r = to_var(rid, self.device)
         t = to_var(tid, self.device)

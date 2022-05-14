@@ -14,14 +14,9 @@ class SimplE(BasicModel):
         self.ent_embeddings = nn.Embedding(self.ent_tot, self.dim)
         self.rel_embeddings = nn.Embedding(self.rel_tot, self.dim)
         self.rel_inv_embeddings = nn.Embedding(self.rel_tot, self.dim)
-        if self.args.init == 'xavier':
-            nn.init.xavier_uniform_(self.ent_embeddings.weight.data)
-            nn.init.xavier_uniform_(self.rel_embeddings.weight.data)
-            nn.init.xavier_uniform_(self.rel_inv_embeddings.weight.data)
-        else:
-            nn.init.xavier_normal_(self.ent_embeddings.weight.data)
-            nn.init.xavier_normal_(self.rel_embeddings.weight.data)
-            nn.init.xavier_normal_(self.rel_inv_embeddings.weight.data)
+        nn.init.xavier_uniform_(self.ent_embeddings.weight.data)
+        nn.init.xavier_uniform_(self.rel_embeddings.weight.data)
+        nn.init.xavier_uniform_(self.rel_inv_embeddings.weight.data)
 
     def calc_avg(self, h, t, r, r_inv):
         return (torch.sum(h * r * t, -1) + torch.sum(h * r_inv * t, -1))/2

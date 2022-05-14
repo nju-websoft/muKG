@@ -215,6 +215,8 @@ class attre_trainer(align_model_trainer):
             if i >= self.args.start_valid and i % self.args.eval_freq == 0:
                 flag = self.model.valid(self.args.stop_metric)
                 self.flag1, self.flag2, self.early_stop = early_stop(self.flag1, self.flag2, flag)
+                if self.args.no_early:
+                    self.early_stop = False
                 if self.early_stop or i == self.args.max_epoch:
                     break
         print("Training ends. Total time = {:.3f} s.".format(time.time() - t))

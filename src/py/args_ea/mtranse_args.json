@@ -31,6 +31,7 @@
 	"eval_metric": "inner",
 	"csls": 10,
 	"top_k": [1, 5, 10, 50],
+	"no_early": true,
 	"is_save": true,
 	"eval_norm": true,
 	"is_parallel": true,

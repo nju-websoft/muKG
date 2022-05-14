@@ -88,9 +88,9 @@ class rdgcn_trainer(align_model_trainer):
             if i >= 10 and i % self.args.eval_freq == 0:
                 flag = self.valid_(self.args.stop_metric)
                 self.flag1, self.flag2, self.early_stop = early_stop(self.flag1, self.flag2, flag)
-                '''if self.early_stop or i == self.args.max_epoch:
-                    break'''
-                if i == 200:
+                if self.args.no_early:
+                    self.early_stop = False
+                if self.early_stop or i == self.args.max_epoch:
                     break
         self.test()
         self.save()

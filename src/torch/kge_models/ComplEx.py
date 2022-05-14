@@ -10,25 +10,18 @@ from src.torch.kge_models.basic_model import BasicModel
 
 
 class ComplEx(BasicModel):
-    def __init__(self, kgs, args, dim=200):
+    def __init__(self, kgs, args):
         super(ComplEx, self).__init__(args, kgs)
 
-        self.dim = dim
+        self.dim = self.args.dim
         self.ent_re_embeddings = nn.Embedding(self.ent_tot, self.dim)
         self.ent_im_embeddings = nn.Embedding(self.ent_tot, self.dim)
         self.rel_re_embeddings = nn.Embedding(self.rel_tot, self.dim)
         self.rel_im_embeddings = nn.Embedding(self.rel_tot, self.dim)
-        if self.args.init == 'xavier':
-            nn.init.xavier_uniform_(self.ent_re_embeddings.weight.data)
-            nn.init.xavier_uniform_(self.ent_im_embeddings.weight.data)
-            nn.init.xavier_uniform_(self.rel_re_embeddings.weight.data)
-            nn.init.xavier_uniform_(self.rel_im_embeddings.weight.data)
-        else:
-            std = 1.0 / math.sqrt(self.args.dim)
-            nn.init.normal_(self.ent_re_embeddings.weight.data, 0, std)
-            nn.init.normal_(self.ent_im_embeddings.weight.data, 0, std)
-            nn.init.normal_(self.rel_re_embeddings.weight.data, 0, std)
-            nn.init.normal_(self.rel_im_embeddings.weight.data, 0, std)
+        nn.init.xavier_uniform_(self.ent_re_embeddings.weight.data)
+        nn.init.xavier_uniform_(self.ent_im_embeddings.weight.data)
+        nn.init.xavier_uniform_(self.rel_re_embeddings.weight.data)
+        nn.init.xavier_uniform_(self.rel_im_embeddings.weight.data)
 
     def calc(self, h_re, h_im, t_re, t_im, r_re, r_im):
         return -(h_re * (r_re * t_re + r_im * t_im) + h_im * (

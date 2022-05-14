@@ -7,9 +7,6 @@
   	"alignment_module": "",
 	  
     "dim": 200,
-  	"init": "xavier",
-	"ent_l2_norm": true,
-	"rel_l2_norm": true,
 	"loss_norm": "L2",
 	"margin": 1.5,
 	"loss": "logistic",

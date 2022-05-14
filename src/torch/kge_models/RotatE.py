@@ -151,7 +151,6 @@ class RotatE(BasicModel):
         print(dir)
         for i in range(len(dir) - 1):
             new_dir += (dir[i] + "/")
-        exist_file = os.listdir(new_dir)
         new_dir = new_dir + "/"
         ent_embeds = np.load(new_dir + "ent_embeds.npy")
         rel_embeds = np.load(new_dir + "rel_embeds.npy")

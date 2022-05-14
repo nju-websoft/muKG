@@ -18,7 +18,7 @@
 	"alpha_2": 0.25,
 
     "neg_sampling": "uniform",
-	"neg_triple_num": 1,
+	"neg_triple_num": 5,
 
 	"learning_rate": 0.01,
     "optimizer": "Adam",
@@ -35,6 +35,7 @@
 	"eval_metric": "inner",
 	"csls": 10,
 	"top_k": [1, 5, 10, 50],
+	"no_early": true,
 	"is_save": true,
 	"eval_norm": true,
   "is_gpu": false

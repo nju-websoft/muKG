@@ -1,7 +1,7 @@
 {
-	"training_data": "../../datasets/",
+	"training_data": "data/OpenEA_dataset_v1.1/EN_DE_15K_V1/",
   	"output": "../../output/results/",
-  	"dataset_division": "721_5fold",
+  	"dataset_division": "721_5fold/1/",
 
   	"embedding_module": "RSN4EA",
   	"alignment_module": "mapping",
@@ -19,7 +19,7 @@
 	"max_length": 15,
 	"alpha": 0.7,
 	"beta": 0.7,
-
+	"margin":1,
 	"learning_rate": 0.0005,
     "optimizer": "Adagrad",
 	"max_epoch": 30,
@@ -35,6 +35,8 @@
 	"eval_metric": "inner",
 	"csls": 10,
 	"top_k": [1, 5, 10, 50],
+	"no_early": true,
 	"is_save": true,
-	"eval_norm": false
+	"eval_norm": false,
+	"is_gpu": true
 }

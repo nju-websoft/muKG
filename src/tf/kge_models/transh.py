@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tqdm import tqdm
 
-from src.py.base.initializers import init_embeddings_v2, init_embeddings
+from src.py.base.initializers import init_embeddings
 from src.py.base.losses import get_loss_func_tf, get_loss_func_tfv2
 from src.py.load import read
 import numpy as np

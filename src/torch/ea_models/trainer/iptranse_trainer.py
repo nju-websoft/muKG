@@ -146,7 +146,6 @@ class iptranse_trainer(align_model_trainer):
         self.ref_entities2 = self.kgs.valid_entities2 + self.kgs.test_entities2
         self.early_stop = None
         if self.args.is_gpu:
-            torch.cuda.set_device(2)
             self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         else:
             self.device = torch.device('cpu')
@@ -240,6 +239,8 @@ class iptranse_trainer(align_model_trainer):
             if epoch >= self.args.start_valid and epoch % self.args.eval_freq == 0:
                 flag = self.model.valid(self.args.stop_metric)
                 self.flag1, self.flag2, self.early_stop = early_stop(self.flag1, self.flag2, flag)
+                if self.args.no_early:
+                    self.early_stop = False
                 if self.early_stop or epoch == self.args.max_epoch:
                     break
             if epoch % self.args.bp_freq == 0:

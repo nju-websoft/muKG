@@ -10,38 +10,18 @@ from ...py.util.util import to_var
 
 class DistMult(BasicModel):
 
-	def __init__(self, kgs, args, dim = 100, margin = None, epsilon = None):
+	def __init__(self, kgs, args, margin = None, epsilon = None):
 		super(DistMult, self).__init__(args, kgs)
 
-		self.dim = dim
-		self.margin = margin
-		self.epsilon = epsilon
-		self.low_values = False
+		self.dim = self.args.dim
+		self.margin = self.args.margin
+		self.epsilon = self.args.epsilon
 		self.ent_embeddings = nn.Embedding(self.ent_tot, self.dim)
 		self.rel_embeddings = nn.Embedding(self.rel_tot, self.dim)
-		if self.args.init == 'xavier':
-			nn.init.xavier_uniform_(self.ent_embeddings.weight.data)
-			nn.init.xavier_uniform_(self.rel_embeddings.weight.data)
-		elif self.args.init == 'normal':
-			std = 1.0 / math.sqrt(self.args.dim)
-			nn.init.normal_(self.ent_embeddings.weight.data, 0, std)
-			nn.init.normal_(self.rel_embeddings.weight.data, 0, std)
-		elif self.args.init == 'uniform':
-			self.embedding_range = nn.Parameter(
-				torch.Tensor([(self.margin + self.epsilon) / self.dim]), requires_grad=False
-			)
-			nn.init.uniform_(
-				tensor=self.ent_embeddings.weight.data,
-				a=-self.embedding_range.item(),
-				b=self.embedding_range.item()
-			)
-			nn.init.uniform_(
-				tensor=self.rel_embeddings.weight.data,
-				a=-self.embedding_range.item(),
-				b=self.embedding_range.item()
-			)
-		self.ent_embeddings.weight.data = F.normalize(self.ent_embeddings.weight.data, 2, -1)
-		self.rel_embeddings.weight.data = F.normalize(self.rel_embeddings.weight.data, 2, -1)
+		nn.init.xavier_uniform_(self.ent_embeddings.weight.data)
+		nn.init.xavier_uniform_(self.rel_embeddings.weight.data)
+		#self.ent_embeddings.weight.data = F.normalize(self.ent_embeddings.weight.data, 2, -1)
+		#self.rel_embeddings.weight.data = F.normalize(self.rel_embeddings.weight.data, 2, -1)
 
 	def calc(self, h, r, t):
 		score = (h * r) * t

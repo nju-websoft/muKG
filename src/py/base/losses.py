@@ -71,13 +71,10 @@ def logistic_adv_loss_torch(pos_score, neg_score, adv):
     import torch
     import torch.nn.functional as F
     import torch.nn as nn
-    adv_temperature = nn.Parameter(torch.Tensor([adv]))
-    adv_temperature.requires_grad = False
-    weights = F.softmax(neg_score * adv, dim=-1).detach()
-    pos_loss = torch.sum(torch.log(1 + torch.exp(pos_score)))
-    neg_loss = torch.sum(weights * torch.log(1 + torch.exp(-neg_score)))
-    loss = (pos_loss + neg_loss) / 2
-    return loss
+    cr = nn.LogSigmoid()
+    weights = F.softmax(-neg_score * adv, dim=-1).detach()
+    return -(torch.sum(cr(-pos_score)) + torch.sum(weights * cr(neg_score))) / 2
+
 
 def margin_loss_tf(phs, prs, pts, nhs, nrs, nts, margin, loss_norm):
     import tensorflow._api.v2.compat.v1 as tf
@@ -179,15 +176,6 @@ def logistic_loss_torch(pos_score, neg_score):
     pos_loss = torch.sum(torch.log(1 + torch.exp(pos_score)))
     neg_loss = torch.sum(torch.log(1 + torch.exp(-neg_score)))
     loss = pos_loss + neg_loss
-    return loss
-
-
-def logistic_adv_loss_torch(pos_score, neg_score, adv):
-    import torch
-    pos_loss = torch.sum(torch.log(1 + torch.exp(pos_score)))
-    weights = get_weights(neg_score, adv)
-    neg_loss = torch.sum(weights * torch.log(1 + torch.exp(-neg_score)))
-    loss = (pos_loss + neg_loss) / 2
     return loss
 
 

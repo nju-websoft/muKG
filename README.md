@@ -248,7 +248,7 @@ python main_args.py -t lp -m transe -o train -d data/FB15K
 - Truncated negative sampling: This method seeks to generate hard negative examples.
 
 **Path sampler:**
-The Path sampler is to support some embedding models that are built by modeling the paths of KGs, such as IPTransE and RSN4EA. It can generate relational path like ***(e_1, r_1, e_2, r_2, e_3)***, entity path like ***(e_1, e_2, e_3)***, and relation path like*** (r_1, r_2)***.
+The Path sampler is to support some embedding models that are built by modeling the paths of KGs, such as IPTransE and RSN4EA. It can generate relational path like ***(e_1, r_1, e_2, r_2, e_3)***, entity path like ***(e_1, e_2, e_3)***, and relation path like ***(r_1, r_2)***.
 
 **Subgraph sampler:**
 The subgraph sampler is to support GNN-based embedding models like GCN-Align and AliNet. It can generate both first-order (i.e., one-hop) and high-order (i.e., multi-hop) neighborhood subgraphs of entities.

@@ -16,9 +16,9 @@
 	  
 	"learning_rate": 0.01,
     "optimizer": "Adagrad",
-	"max_epoch": 10,
+	"max_epoch": 200,
 	"batch_size": 5000,
-  "margin" : 1,
+  	"margin" : 1,
 	"pos_margin": 0.01,
   	"neg_margin": 2.0,
     "neg_margin_balance": 0.2,
@@ -38,6 +38,7 @@
 	"eval_metric": "inner",
 	"csls": 10,
 	"top_k": [1, 5, 10, 50],
+	"no_early": true,
 	"is_save": true,
 	"eval_norm": false,
 
@@ -47,5 +48,5 @@
 	"likelihood_slice": 10,
 	"sub_epoch": 10,
 	"parallel_num": 2,
-   "is_gpu":true
+    "is_gpu":true
 }

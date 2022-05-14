@@ -15,7 +15,7 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 if __name__ == '__main__':
     t = time.time()
     curPath = os.path.abspath(os.path.dirname(__file__))
-    model_name = 'analogy'
+    model_name = 'conve'
     kg_task = 'lp'
     if kg_task == 'ea':
         args = load_args(curPath + "/args_ea/" + model_name + r"_args.json")
@@ -27,6 +27,8 @@ if __name__ == '__main__':
     print(args.embedding_module)
     print(args)
     remove_unlinked = False
+    if args.embedding_module == "RSN4EA":
+        remove_unlinked = True
     kgs = read_kgs_from_folder(kg_task, args.training_data, args.dataset_division, args.alignment_module, args.ordered,
                                remove_unlinked=remove_unlinked)
     if kg_task == 'ea':
@@ -35,7 +37,7 @@ if __name__ == '__main__':
         model = kge_models(args, kgs)
     else:
         model = et_models(args, kgs)
-    model.get_model('Analogy')
+    model.get_model('ConvE')
     model.run()
     model.test()
     print("Total run time = {:.3f} s.".format(time.time() - t))

@@ -1,15 +1,12 @@
 {
-	"training_data": "data/FB15K/",
+	"training_data": "data/Countries/Countries_S2/",
   	"output": "../../output/results/",
   	"dataset_division": "",
 
-  	"embedding_module": "DisMult",
+  	"embedding_module": "DistMult",
   	"alignment_module": "",
 	  
     "dim": 100,
-  	"init": "xavier",
-	"ent_l2_norm": false,
-	"rel_l2_norm": false,
 	"loss_norm": "L2",
 	"margin": 1.5,
 	"epsilon": 2,
@@ -18,9 +15,9 @@
 	"neg_sampling": "uniform",
 	"neg_triple_num": 1,
 	  
-	"learning_rate": 0.01,
+	"learning_rate": 0.05,
     "optimizer": "Adagrad",
-	"max_epoch": 500,
+	"max_epoch": 10,
 	"batch_size": 5000,
 
 	"batch_threads_num": 2,

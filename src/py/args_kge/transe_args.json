@@ -4,17 +4,13 @@
   	"dataset_division": "",
 
   	"embedding_module": "TransE",
-  	"alignment_module": "sharing",
-	"search_module": "greedy",
-	  
+  	"alignment_module": "",
     "dim": 100,
-  	"init": "normal",
 	"ent_l2_norm": false,
-	"rel_l2_norm": false,
-	"loss_norm": "L1",
 	"margin": 1.5,
+	"adv": 2,
 	"loss": "margin-based",
-	"test_tail": false,
+	"tet_tail": false,
 	"neg_sampling": "uniform",
 	"neg_triple_num": 2,
 	  
@@ -22,7 +18,7 @@
     "optimizer": "Adagrad",
 	"max_epoch": 20,
 	"batch_size": 100,
-
+	"ordered": true,
 	"batch_threads_num": 2,
 	"start_valid": 10,
 	"eval_freq": 10,

@@ -186,6 +186,8 @@ class bootea_trainer(align_model_trainer):
             if i * sub_num >= self.args.start_valid:
                 flag = self.model.valid(self.args.stop_metric)
                 self.flag1, self.flag2, self.early_stop = early_stop(self.flag1, self.flag2, flag)
+                if self.args.no_early:
+                    self.early_stop = False
                 if self.early_stop or i == iter_nums:
                     break
             labeled_align, entities1, entities2 = bootstrapping(self.model.eval_ref_sim_mat(),

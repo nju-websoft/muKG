@@ -16,12 +16,8 @@ class RESCAL(BasicModel):
         self.ent_embeddings = nn.Embedding(self.ent_tot, self.dim)
         self.rel_embeddings = nn.Embedding(self.rel_tot, self.dim * self.dim)
         # self.low_values = False
-        if self.args.init == 'xavier':
-            nn.init.xavier_uniform_(self.ent_embeddings.weight.data)
-            nn.init.xavier_uniform_(self.rel_embeddings.weight.data)
-        else:
-            nn.init.xavier_normal_(self.ent_embeddings.weight.data)
-            nn.init.xavier_normal_(self.rel_embeddings.weight.data)
+        nn.init.xavier_uniform_(self.ent_embeddings.weight.data)
+        nn.init.xavier_uniform_(self.rel_embeddings.weight.data)
         # self.ent_embeddings.weight.data = F.normalize(self.ent_embeddings.weight.data, 2, -1)
 
     def calc(self, h, t, r):
@@ -71,8 +67,7 @@ class RESCAL(BasicModel):
             t = t.view(b_size, 1, self.dim)
             hr = torch.matmul(h, r).view(b_size, self.rel_tot, self.dim)
             return -(hr * t).sum(dim=2)
-    
-    
+
     def forward(self, data):
         batch_h = data['batch_h']
         batch_t = data['batch_t']
@@ -82,19 +77,7 @@ class RESCAL(BasicModel):
         r = self.rel_embeddings(batch_r)
         score = self.calc(h, t, r)
         return score
-    
-    
-    def regularization(self, data):
-        batch_h = data['batch_h']
-        batch_t = data['batch_t']
-        batch_r = data['batch_r']
-        h = self.ent_embeddings(batch_h)
-        t = self.ent_embeddings(batch_t)
-        r = self.rel_embeddings(batch_r)
-        regul = (torch.mean(h ** 2) + torch.mean(t ** 2) + torch.mean(r ** 2)) / 3
-        return regul
-    
-    
+
     def predict(self, data):
         score = -self.forward(data)
         return score.cpu().data.numpy()

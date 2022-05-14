@@ -47,7 +47,7 @@ class kge_trainer:
         self.kgs = kgs
         self.model = model
         if self.args.is_gpu:
-            #torch.cuda.set_device(0)
+            # torch.cuda.set_device(0)
             self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
             # self.device = torch.device('cuda:2')
         else:
@@ -56,9 +56,11 @@ class kge_trainer:
         self.valid = LinkPredictionEvaluator(model, args, kgs, is_valid=True)
         self.optimizer = get_optimizer_torch(self.args.optimizer, self.model, self.args.learning_rate)
         train_dataset = PyTorchTrainDataset(self.kgs.relation_triples_list, self.args.neg_triple_num, kgs)
-        self.data_loader = DataLoader(train_dataset, batch_size=self.args.batch_size, collate_fn=train_dataset.collate_fn,
-                                 shuffle=True, pin_memory=True, num_workers=self.args.batch_threads_num, drop_last=True)
-    
+        self.data_loader = DataLoader(train_dataset, batch_size=self.args.batch_size,
+                                      collate_fn=train_dataset.collate_fn,
+                                      shuffle=True, pin_memory=True, num_workers=self.args.batch_threads_num,
+                                      drop_last=False)
+
     def run_t(self):
         triples_num = self.kgs.relation_triples_num
         triple_steps = int(math.ceil(triples_num / self.args.batch_size))
@@ -78,7 +80,7 @@ class kge_trainer:
                                  self.kgs.entities_list, [],
                                  self.args.batch_size, steps_task,
                                  training_batch_queue, neighbors1, neighbors2, self.args.neg_triple_num)).start()
-            #print('processing cost time: {:.4f}s'.format(time.time() - tm))
+            # print('processing cost time: {:.4f}s'.format(time.time() - tm))
 
             start = time.time()
             length = 0
@@ -86,19 +88,19 @@ class kge_trainer:
                 self.optimizer.zero_grad()
                 batch_pos, batch_neg = training_batch_queue.get()
                 self.batch_size = len(batch_pos)
-                #print(len(batch_neg))
-                #length += len(batch_pos)
+                # print(len(batch_neg))
+                # length += len(batch_pos)
                 batch_pos = np.array(batch_pos)
                 batch_neg = np.array(batch_neg)
                 datas = np.concatenate((batch_pos, batch_neg), axis=0)
-                #datas = batch_pos
+                # datas = batch_pos
                 data = {
                     'batch_h': to_var(np.array([x[0] for x in datas]), self.device),
                     'batch_r': to_var(np.array([x[1] for x in datas]), self.device),
                     'batch_t': to_var(np.array([x[2] for x in datas]), self.device),
                 }
                 score = self.model(data)
-                
+
                 length += self.batch_size
                 po_score = self.get_pos_score(score)
                 ne_score = self.get_neg_score(score)
@@ -121,8 +123,7 @@ class kge_trainer:
                 if self.early_stop or i == self.args.max_epoch:
                     break'''
         self.save()
-        
-        
+
     def run(self):
         print(next(self.model.parameters()).device)
         for i in range(self.args.max_epoch):
@@ -151,12 +152,12 @@ class kge_trainer:
                 length += self.batch_size
                 po_score = self.get_pos_score(score)
                 ne_score = self.get_neg_score(score)
-                #print(po_score)
+                # print(po_score)
                 loss = get_loss_func_torch(po_score, ne_score, self.args)
                 loss.backward()
                 self.optimizer.step()
                 res += loss.item()
-                #time.sleep(0.003)
+                # time.sleep(0.003)
                 # self.batch_size = len(batch_pos)
             print('epoch {}, avg. triple loss: {:.4f}, cost time: {:.4f}s'.format(i, res / length, time.time() - start))
             if i >= self.args.start_valid and i % self.args.eval_freq == 0:
@@ -167,14 +168,18 @@ class kge_trainer:
                 '''self.flag1, self.flag2, self.early_stop = early_stop(self.flag1, self.flag2, flag)
                 if self.early_stop or i == self.args.max_epoch:
                     break'''
+        self.test()
         self.save()
-    
+
     def test(self):
         predict = LinkPredictionEvaluator(self.model, self.args, self.kgs)
         predict.print_results()
 
     def retest(self):
-        self.model.load_embeddings()
+        if self.model.__class__.__name__ == 'ConvE':
+            self.model = torch.load(self.model.out_folder + 'conve.pth')
+        else:
+            self.model.load_embeddings()
         self.model.to(self.device)
         t1 = time.time()
         predict = LinkPredictionEvaluator(self.model, self.args, self.kgs)
@@ -187,11 +192,18 @@ class kge_trainer:
 
     def get_neg_score(self, score):
         tmp = score[self.batch_size:]
-        #print(tmp.view(self.batch_size, -1).shape)
+        # print(tmp.view(self.batch_size, -1).shape)
         return tmp.view(self.batch_size, -1)
 
     def save(self):
-        self.model.save()
+        if self.model.__class__.__name__ == 'ConvE':
+            if not os.path.exists(self.model.out_folder):
+                os.makedirs(self.model.out_folder)
+            # print(self.state_dict())
+            torch.save(self.model, self.model.out_folder + 'conve.pth')
+            #self.model = torch.load(self.model.out_folder + 'conve.pth')
+        else:
+            self.model.save()
 
 
 def get_pos_score(score, batch_size):
@@ -209,18 +221,18 @@ def trainer(config: Dict):
     args = config["args"]
     kgs = config["kgs"]
     model = config["model"]
-    #model = nn.Linear(4, 1)
+    # model = nn.Linear(4, 1)
     # model.module.generate()
     if args.is_gpu:
-        #torch.cuda.set_device(3)
+        # torch.cuda.set_device(3)
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         # self.device = torch.device('cuda:2')
-    else: 
+    else:
         device = torch.device('cpu')
 
     model = train.torch.prepare_model(model)
     valid = LinkPredictionEvaluator(model.module, args, kgs, is_valid=True)
-    #model = train.torch.prepare_model(model)
+    # model = train.torch.prepare_model(model)
     optimizer = get_optimizer_torch(args.optimizer, model, args.learning_rate)
     flag1 = -1
     flag2 = -1
@@ -242,7 +254,7 @@ def trainer(config: Dict):
             data0 = data[0]
             data1 = data[1]
             data2 = data[2]
-            #print(len(data[0]))
+            # print(len(data[0]))
             data = {
                 'batch_h': data0,
                 'batch_r': data1,
@@ -297,7 +309,7 @@ class parallel_trainer(parallel_model):
         device_allocate = self.args.device_number / self.args.num_worker
         if self.args.is_gpu:
             trainer1 = Trainer(backend="torch", num_workers=self.args.num_worker, use_gpu=self.args.is_gpu,
-                               resources_per_worker={"GPU":device_allocate})
+                               resources_per_worker={"GPU": device_allocate})
         else:
             trainer1 = Trainer(backend="torch", num_workers=self.args.num_worker, use_gpu=self.args.is_gpu,
                                resources_per_worker={"CPU": device_allocate})

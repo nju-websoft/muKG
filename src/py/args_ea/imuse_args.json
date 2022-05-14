@@ -1,5 +1,5 @@
 {
-	"training_data": "data/OpenEA_dataset_v1.1/EN_DE_15K_V1/",
+	"training_data": "data/OpenEA_dataset_v1.1/EN_FR_15K_V1/",
   	"output": "../../output/results/",
   	"dataset_division": "721_5fold/1/",
 
@@ -16,11 +16,11 @@
 	"loss": "margin_based",
 
     "neg_sampling": "uniform",
-	"neg_triple_num": 1,
+	"neg_triple_num": 2,
 
 	"learning_rate": 0.01,
     "optimizer": "Adam",
-	"max_epoch": 2000,
+	"max_epoch": 1000,
 	"batch_size": 5000,
 
 	"batch_threads_num": 2,
@@ -33,6 +33,7 @@
 	"eval_metric": "inner",
 	"csls": 10,
 	"top_k": [1, 5, 10, 50],
+	"no_early": true,
 	"is_save": true,
 	"eval_norm": true,
 

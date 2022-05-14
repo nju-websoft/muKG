@@ -146,6 +146,8 @@ class gcn_align_trainer(align_model_trainer):
                 self.feed_dict_ae = feed_dict_ae
                 flag = self.valid_(self.args.stop_metric)
                 self.flag1, self.flag2, self.early_stop = early_stop(self.flag1, self.flag2, flag)
+                if self.args.no_early:
+                    self.early_stop = False
                 if self.early_stop or i == self.args.max_epoch:
                     break
 

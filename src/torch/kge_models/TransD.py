@@ -18,8 +18,6 @@ class TransD(BasicModel):
         self.projected = False
         self.dim_e = dim_e
         self.dim_r = dim_r
-        self.margin = margin
-        self.epsilon = epsilon
         self.norm_flag = norm_flag
         self.p_norm = 1
 
@@ -31,44 +29,10 @@ class TransD(BasicModel):
                                                         self.ent_tot,
                                                         self.dim_r)),
                                             requires_grad=False)
-        if margin == None or epsilon == None:
-            nn.init.xavier_uniform_(self.ent_embeddings.weight.data)
-            nn.init.xavier_uniform_(self.rel_embeddings.weight.data)
-            nn.init.xavier_uniform_(self.ent_transfer.weight.data)
-            nn.init.xavier_uniform_(self.rel_transfer.weight.data)
-        else:
-            self.ent_embedding_range = nn.Parameter(
-                torch.Tensor([(self.margin + self.epsilon) / self.dim_e]), requires_grad=False
-            )
-            self.rel_embedding_range = nn.Parameter(
-                torch.Tensor([(self.margin + self.epsilon) / self.dim_r]), requires_grad=False
-            )
-            nn.init.uniform_(
-                tensor=self.ent_embeddings.weight.data,
-                a=-self.ent_embedding_range.item(),
-                b=self.ent_embedding_range.item()
-            )
-            nn.init.uniform_(
-                tensor=self.rel_embeddings.weight.data,
-                a=-self.rel_embedding_range.item(),
-                b=self.rel_embedding_range.item()
-            )
-            nn.init.uniform_(
-                tensor=self.ent_transfer.weight.data,
-                a=-self.ent_embedding_range.item(),
-                b=self.ent_embedding_range.item()
-            )
-            nn.init.uniform_(
-                tensor=self.rel_transfer.weight.data,
-                a=-self.rel_embedding_range.item(),
-                b=self.rel_embedding_range.item()
-            )
-        if margin != None:
-            self.margin = nn.Parameter(torch.Tensor([margin]))
-            self.margin.requires_grad = False
-            self.margin_flag = True
-        else:
-            self.margin_flag = False
+        nn.init.xavier_uniform_(self.ent_embeddings.weight.data)
+        nn.init.xavier_uniform_(self.rel_embeddings.weight.data)
+        nn.init.xavier_uniform_(self.ent_transfer.weight.data)
+        nn.init.xavier_uniform_(self.rel_transfer.weight.data)
 
     def _resize(self, tensor, axis, size):
         shape = tensor.size()

@@ -21,13 +21,8 @@ class HolE(BasicModel):
 		self.low_values = False
 		self.ent_embeddings = nn.Embedding(self.ent_tot, self.dim)
 		self.rel_embeddings = nn.Embedding(self.rel_tot, self.dim)
-		if self.args.init == 'xavier':
-			nn.init.xavier_uniform_(self.ent_embeddings.weight.data)
-			nn.init.xavier_uniform_(self.rel_embeddings.weight.data)
-		else:
-			std = 1.0 / math.sqrt(self.args.dim)
-			nn.init.normal_(self.ent_embeddings.weight.data, 0, std)
-			nn.init.normal_(self.rel_embeddings.weight.data, 0, std)
+		nn.init.xavier_uniform_(self.ent_embeddings.weight.data)
+		nn.init.xavier_uniform_(self.rel_embeddings.weight.data)
 		self.ent_embeddings.weight.data = F.normalize(self.ent_embeddings.weight.data, 2, -1)
 		self.rel_embeddings.weight.data = F.normalize(self.rel_embeddings.weight.data, 2, -1)
 

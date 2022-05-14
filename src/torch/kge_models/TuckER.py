@@ -15,14 +15,8 @@ class TuckER(BasicModel):
         self.dim_r = self.args.dim_r
         self.ent_embeddings = torch.nn.Embedding(self.ent_tot, self.dim_e)
         self.rel_embeddings = torch.nn.Embedding(self.rel_tot, self.dim_r)
-        if self.args.init == 'xavier':
-            xavier_normal_(self.ent_embeddings.weight.data)
-            xavier_normal_(self.rel_embeddings.weight.data)
-        else:
-            std = 1.0 / math.sqrt(self.args.dim)
-            torch.nn.init.normal_(self.ent_embeddings.weight.data, 0, std)
-            torch.nn.init.normal_(self.rel_embeddings.weight.data, 0, std)
-            torch.nn.init.normal_(self.transfer_matrix.weight.data, 0, std)
+        xavier_normal_(self.ent_embeddings.weight.data)
+        xavier_normal_(self.rel_embeddings.weight.data)
         self.W = torch.nn.Parameter(torch.tensor(np.random.uniform(-1, 1, (self.dim_r, self.dim_e, self.dim_e)),
                                                  dtype=torch.float, requires_grad=True))
 

@@ -52,12 +52,12 @@ class IPTransE(BasicModel):
             nn.init.trunc_normal_(self.ent_embeds.weight.data, std=std)
             nn.init.trunc_normal_(self.rel_embeds.weight.data, std=std)
         elif self.args.init == 'uniform':
-        		self.embedding_range = nn.Parameter(
-        			torch.Tensor([(self.margin.item() + self.epsilon) / self.dim]), 
-        			requires_grad=False
-        		)
-        		nn.init.uniform_(tensor=self.ent_embeds.weight.data, a=-self.embedding_range.item(), b=self.embedding_range.item())
-        		nn.init.uniform_(tensor=self.rel_embeds.weight.data, a=-self.embedding_range.item(), b=self.embedding_range.item())
+            self.embedding_range = nn.Parameter(
+                torch.Tensor([(self.margin.item() + self.epsilon) / self.dim]),
+                requires_grad=False
+            )
+            nn.init.uniform_(tensor=self.ent_embeds.weight.data, a=-self.embedding_range.item(), b=self.embedding_range.item())
+            nn.init.uniform_(tensor=self.rel_embeds.weight.data, a=-self.embedding_range.item(), b=self.embedding_range.item())
         self.ent_embeds.weight.data = F.normalize(self.ent_embeds.weight.data, 2, -1)
         self.rel_embeds.weight.data = F.normalize(self.rel_embeds.weight.data, 2, -1)
 
@@ -95,16 +95,16 @@ class IPTransE(BasicModel):
         nry = self.rel_embeds(nry)
         nr = self.rel_embeds(nr)
         if self.args.loss_norm == "L2":
-            pos = torch.pow(torch.norm(phs + prs - pts, 2, -1), 2)
-            neg = torch.pow(torch.norm(nhs + nrs - nts, 2, -1), 2)
+            pos = torch.norm(phs + prs - pts, 2, -1)
+            neg = torch.norm(nhs + nrs - nts, 2, -1)
         else:
-            pos = torch.pow(torch.norm(phs + prs - pts, 1, -1), 2)
-            neg = torch.pow(torch.norm(nhs + nrs - nts, 1, -1), 2)
+            pos = torch.norm(phs + prs - pts, 1, -1)
+            neg = torch.norm(nhs + nrs - nts, 1, -1)
         pos1 = pos.view(batch_size_now, -1)
         neg1 = neg.view(batch_size_now, -1)
         ptranse_loss1 = torch.sum(torch.relu_(pos1 - neg1 + self.margin))
-        pos2 = torch.pow(torch.norm(prx + pry - pr, 2, -1), 2)
-        neg2 = torch.pow(torch.norm(nrx + nry - nr, 2, -1), 2)
+        pos2 = torch.norm(prx + pry - pr, 2, -1)
+        neg2 = torch.norm(nrx + nry - nr, 2, -1)
         ws = 1 / ws
         ptranse_loss2 = torch.sum(ws * torch.relu_(pos2 - neg2 + self.margin))
         return ptranse_loss1 + self.args.path_parm * ptranse_loss2
@@ -124,13 +124,13 @@ class IPTransE(BasicModel):
         nhs = self.ent_embeds(nhs)
         nrs = self.rel_embeds(nrs)
         nts = self.ent_embeds(nts)
-        pos = torch.pow(torch.norm(phs + prs - pts, 2, -1), 2)
-        neg = torch.pow(torch.norm(nhs + nrs - nts, 2, -1), 2)
+        pos = torch.norm(phs + prs - pts, 2, -1)
+        neg = torch.norm(nhs + nrs - nts, 2, -1)
         return torch.sum(ws * torch.relu_(pos + self.args.margin - neg))
 
     def tests(self, entities1, entities2):
-        seed_entity1 = self.ent_embeds(to_tensor(entities1, self.device))
-        seed_entity2 = self.ent_embeds(to_tensor(entities2, self.device))
+        seed_entity1 = F.normalize(self.ent_embeds(to_tensor(entities1, self.device)), 2, -1)
+        seed_entity2 = F.normalize(self.ent_embeds(to_tensor(entities2, self.device)), 2, -1)
         _, _, _, sim_list = test(seed_entity1.cpu().detach().numpy(), seed_entity2.cpu().detach().numpy(), None,
                                  self.args.top_k, self.args.test_threads_num, metric=self.args.eval_metric, normalize=self.args.eval_norm,
                                  csls_k=0, accurate=True)
@@ -139,8 +139,8 @@ class IPTransE(BasicModel):
 
     def valid(self, stop_metric):
         if len(self.kgs.valid_links) > 0:
-            seed_entity1 = self.ent_embeds(to_tensor(self.kgs.valid_entities1, self.device))
-            seed_entity2 = self.ent_embeds(to_tensor(self.kgs.valid_entities2, self.device))
+            seed_entity1 = F.normalize(self.ent_embeds(to_tensor(self.kgs.valid_entities1, self.device)), 2, -1)
+            seed_entity2 = F.normalize(self.ent_embeds(to_tensor(self.kgs.valid_entities2, self.device)), 2, -1)
         else:
             seed_entity1 = F.normalize(self.ent_embeds(to_tensor(self.kgs.test_entities1, self.device)), 2, -1)
             seed_entity2 = F.normalize(self.ent_embeds(to_tensor(self.kgs.test_entities2, self.device)), 2, -1)

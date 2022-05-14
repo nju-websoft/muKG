@@ -26,6 +26,7 @@
 	"eval_metric": "manhattan",
 	"csls": 10,
 	"top_k": [1, 5, 10, 50],
+	"no_early": true,
 	"is_save": true,
 	"eval_norm": false,
  

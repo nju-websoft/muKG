@@ -4,23 +4,27 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from .basic_model import BasicModel
-from ...py.base.initializers_torch import init_embeddings_torch
 from ...py.load import read
 from ...py.util.util import to_var
 
 
 class Analogy(BasicModel):
 
-    def __init__(self, kgs, args, dim=100):
+    def __init__(self, kgs, args):
         super(Analogy, self).__init__(args, kgs)
-        self.dim = dim
-        assert self.args.init == 'xavier'
-        self.ent_re_embeddings = init_embeddings_torch(self.args.init, self.args.ent_l2_norm, self.ent_tot, dim, self.args)
-        self.ent_im_embeddings = init_embeddings_torch(self.args.init, self.args.ent_l2_norm, self.ent_tot, dim, self.args)
-        self.rel_re_embeddings = init_embeddings_torch(self.args.init, self.args.rel_l2_norm, self.rel_tot, dim, self.args)
-        self.rel_im_embeddings = init_embeddings_torch(self.args.init, self.args.rel_l2_norm, self.rel_tot, dim, self.args)
-        self.ent_embeddings = init_embeddings_torch(self.args.init, self.args.ent_l2_norm, self.ent_tot, dim*2, self.args)
-        self.rel_embeddings = init_embeddings_torch(self.args.init, self.args.rel_l2_norm, self.rel_tot, dim*2, self.args)
+        self.dim = self.args.dim
+        self.ent_re_embeddings = nn.Embedding(self.ent_tot, self.dim)
+        self.ent_im_embeddings = nn.Embedding(self.ent_tot, self.dim)
+        self.rel_re_embeddings = nn.Embedding(self.rel_tot, self.dim)
+        self.rel_im_embeddings = nn.Embedding(self.rel_tot, self.dim)
+        self.ent_embeddings = nn.Embedding(self.ent_tot, self.dim*2)
+        self.rel_embeddings = nn.Embedding(self.rel_tot, self.dim*2)
+        nn.init.xavier_uniform_(self.ent_re_embeddings.weight.data)
+        nn.init.xavier_uniform_(self.ent_im_embeddings.weight.data)
+        nn.init.xavier_uniform_(self.rel_re_embeddings.weight.data)
+        nn.init.xavier_uniform_(self.rel_im_embeddings.weight.data)
+        nn.init.xavier_uniform_(self.rel_embeddings.weight.data)
+        nn.init.xavier_uniform_(self.ent_embeddings.weight.data)
 
     def calc(self, h_re, h_im, h, t_re, t_im, t, r_re, r_im, r):
         return -((h * r * t).sum(dim=1) +

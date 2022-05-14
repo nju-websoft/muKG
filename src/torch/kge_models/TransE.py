@@ -9,23 +9,18 @@ from src.torch.kge_models.basic_model import BasicModel
 
 class TransE(BasicModel):
 
-	def __init__(self, kgs, args, dim = 100, p_norm = 2, norm_flag = True, margin = 1.5, epsilon = None):
+	def __init__(self, kgs, args):
 		super(TransE, self).__init__(args, kgs)
-		self.dim = dim
-		self.margin = margin
+		self.dim = self.args.dim
 		# self.epsilon = epsilon
-		self.norm_flag = norm_flag
+		self.norm_flag = self.args.ent_l2_norm
 		self.p_norm = 1
 		self.margin_flag = False
+		assert self.args.init == 'uniform'
 		if self.args.loss == 'logistic_adv':
 			self.margin_flag = True
 		self.ent_embeddings = nn.Embedding(self.ent_tot, self.dim)
 		self.rel_embeddings = nn.Embedding(self.rel_tot, self.dim)
-
-		#nn.init.xavier_uniform_(self.ent_embeddings.weight.data)
-		#nn.init.xavier_uniform_(self.rel_embeddings.weight.data)
-		self.margin = nn.Parameter(torch.Tensor([margin]))
-		self.margin.requires_grad = False
 		self.epsilon = 2.0
 		self.margin = nn.Parameter(
 			torch.Tensor([self.args.margin]),
@@ -35,12 +30,11 @@ class TransE(BasicModel):
 			torch.Tensor([(self.margin.item() + self.epsilon) / self.dim]),
 			requires_grad=False
 		)
-		self.ent_embeddings = nn.Embedding(self.ent_tot, self.dim)
-		self.rel_embeddings = nn.Embedding(self.rel_tot, self.dim)
 		nn.init.uniform_(tensor=self.ent_embeddings.weight.data, a=-self.embedding_range.item(), b=self.embedding_range.item())
 		nn.init.uniform_(tensor=self.rel_embeddings.weight.data, a=-self.embedding_range.item(), b=self.embedding_range.item())
-		#self.ent_embeddings.weight.data = F.normalize(self.ent_embeddings.weight.data, 2, -1)
-		#self.rel_embeddings.weight.data = F.normalize(self.rel_embeddings.weight.data, 2, -1)
+		if self.norm_flag:
+			self.ent_embeddings.weight.data = F.normalize(self.ent_embeddings.weight.data, 2, -1)
+			self.rel_embeddings.weight.data = F.normalize(self.rel_embeddings.weight.data, 2, -1)
 
 	def calc(self, h, r, t):
 		score = (h + r) - t
