@@ -10,9 +10,9 @@ def sim(embed1, embed2, metric='inner', normalize=False, csls_k=0):
 
     Parameters
     ----------
-    embed1 : matrix_like
+    embed1 : numpy
         An embedding matrix of size n1*d, where n1 is the number of embeddings and d is the dimension.
-    embed2 : matrix_like
+    embed2 : numpy
         An embedding matrix of size n2*d, where n2 is the number of embeddings and d is the dimension.
     metric : str, optional, inner default.
         The distance metric to use. It can be 'cosine', 'euclidean', 'inner'.
@@ -23,7 +23,8 @@ def sim(embed1, embed2, metric='inner', normalize=False, csls_k=0):
 
     Returns
     -------
-    sim_mat : An similarity matrix of size n1*n2.
+    sim_mat : numpy
+        An similarity matrix of size n1*n2.
     """
     if normalize:
         eval_norm = np.linalg.norm(embed1, axis=1, keepdims=True)
@@ -71,7 +72,8 @@ def csls_sim(sim_mat, k):
 
     Returns
     -------
-    csls_sim_mat : A csls similarity matrix of n1*n2.
+    csls_sim_mat : numpy
+        A csls similarity matrix of n1*n2.
     """
 
     nearest_values1 = calculate_nearest_k(sim_mat, k)

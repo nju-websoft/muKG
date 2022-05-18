@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.py.model.general_models &mdash; muKG . documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html" class="icon icon-home"> muKG
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../tutorials/run.html">Training tutorials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/base.html">base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/evaluation.html">evaluation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/load.html">load</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/model.html">model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/util.html">util</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">muKG</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+      <li>src.py.model.general_models</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for src.py.model.general_models</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">src.py.evaluation.evaluation</span> <span class="kn">import</span> <span class="n">LinkPredictionEvaluator</span>
+<span class="kn">from</span> <span class="nn">src.py.util.env_checker</span> <span class="kn">import</span> <span class="n">module_exists</span>
+
+
+<span class="k">class</span> <span class="nc">ModelFamily_tf</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kgs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="n">args</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kgs</span> <span class="o">=</span> <span class="n">kgs</span>
+
+    <span class="k">def</span> <span class="nf">infer_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_name</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">src.tf.kge_models.kge_trainer</span> <span class="kn">import</span> <span class="n">kge_trainer</span>
+        <span class="c1"># from src.tf.kge_models.transd import TransD</span>
+
+        <span class="kn">from</span> <span class="nn">src.tf.ea_models.bootea</span> <span class="kn">import</span> <span class="n">BootEA</span>
+        <span class="kn">from</span> <span class="nn">src.tf.ea_models.rdgcn</span> <span class="kn">import</span> <span class="n">RDGCN</span>
+        <span class="kn">from</span> <span class="nn">src.tf.ea_models.mtranse</span> <span class="kn">import</span> <span class="n">MTransE</span>
+        <span class="kn">from</span> <span class="nn">src.tf.ea_models.attre</span> <span class="kn">import</span> <span class="n">AttrE</span>
+        <span class="kn">from</span> <span class="nn">src.tf.ea_models.sea</span> <span class="kn">import</span> <span class="n">SEA</span>
+        <span class="kn">from</span> <span class="nn">src.tf.ea_models.imuse</span> <span class="kn">import</span> <span class="n">IMUSE</span>
+        <span class="kn">from</span> <span class="nn">src.tf.ea_models.gcn_align</span> <span class="kn">import</span> <span class="n">GCN_Align</span>
+        <span class="kn">from</span> <span class="nn">src.tf.ea_models.iptranse</span> <span class="kn">import</span> <span class="n">IPTransE</span>
+        <span class="kn">from</span> <span class="nn">src.tf.ea_models.jape</span> <span class="kn">import</span> <span class="n">JAPE</span>
+        <span class="kn">from</span> <span class="nn">src.tf.ea_models.rsn4ea</span> <span class="kn">import</span> <span class="n">RSN4EA</span>
+
+        <span class="k">if</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;AttrE&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">AttrE</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;BootEA&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">BootEA</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;GCN_Align&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">GCN_Align</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;IMUSE&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">IMUSE</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;JAPE&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">JAPE</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;MTransE&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">MTransE</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;IPtransE&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">IPTransE</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;RDGCN&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">RDGCN</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;SEA&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">SEA</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;RSN4EA&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">RSN4EA</span><span class="p">()</span>
+
+        <span class="kn">from</span> <span class="nn">src.tf.kge_models.Analogy</span> <span class="kn">import</span> <span class="n">Analogy</span>
+        <span class="kn">from</span> <span class="nn">src.tf.kge_models.transe</span> <span class="kn">import</span> <span class="n">TransE</span>
+        <span class="kn">from</span> <span class="nn">src.tf.kge_models.transh</span> <span class="kn">import</span> <span class="n">TransH</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        from src.tf.kge_models.ComplEx import ComplEx</span>
+<span class="sd">        from src.tf.kge_models.DistMult import DistMult</span>
+<span class="sd">        from src.tf.kge_models.HolE import HolE</span>
+<span class="sd">        from src.tf.kge_models.RESCAL import RESCAL</span>
+<span class="sd">        from src.tf.kge_models.TransD import TransD</span>
+<span class="sd">        from src.tf.kge_models.TransR import TransR</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># self.TransD = TransD()</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        self.TransH = TransH(kgs, args)</span>
+<span class="sd">        self.TransE = TransE(kgs, args)</span>
+<span class="sd">        self.HolE = HolE(kgs, args)</span>
+<span class="sd">        self.Analogy = Analogy(kgs, args)</span>
+<span class="sd">        self.RESCAL = RESCAL(kgs, args)</span>
+<span class="sd">        self.ComplEx = ComplEx(kgs, args)</span>
+<span class="sd">        self.DistMult = DistMult(kgs, args)</span>
+<span class="sd">        self.TransR = TransR(kgs, args)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;Analogy&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Analogy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;TransE&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">TransE</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;TransH&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">TransH</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
+
+        <span class="kn">from</span> <span class="nn">src.tf.et_models.TransE_ET</span> <span class="kn">import</span> <span class="n">TransE_ET</span>
+        <span class="k">if</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;TransE_ET&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">TransE_ET</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        elif model_name == &#39;TransD&#39;:</span>
+<span class="sd">            return TransD(self.args, self.kgs)</span>
+<span class="sd">        elif model_name == &#39;TransR&#39;:</span>
+<span class="sd">            return TransR(self.kgs, self.args)</span>
+<span class="sd">        elif model_name == &#39;HolE&#39;:</span>
+<span class="sd">            return HolE(self.kgs, self.args)</span>
+<span class="sd">        elif model_name == &#39;RESCAL&#39;:</span>
+<span class="sd">            return RESCAL(self.kgs, self.args)</span>
+<span class="sd">        elif model_name == &#39;ComplEx&#39;:</span>
+<span class="sd">            return ComplEx(self.kgs, self.args)</span>
+<span class="sd">        elif model_name == &#39;DistMult&#39;:</span>
+<span class="sd">            return DistMult(self.kgs, self.args)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+
+<span class="k">class</span> <span class="nc">ModelFamily_torch</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kgs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="n">args</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kgs</span> <span class="o">=</span> <span class="n">kgs</span>
+
+    <span class="k">def</span> <span class="nf">infer_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_name</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">src.torch.kge_models.Analogy</span> <span class="kn">import</span> <span class="n">Analogy</span>
+        <span class="kn">from</span> <span class="nn">src.torch.kge_models.ComplEx</span> <span class="kn">import</span> <span class="n">ComplEx</span>
+        <span class="kn">from</span> <span class="nn">src.torch.kge_models.DistMult</span> <span class="kn">import</span> <span class="n">DistMult</span>
+        <span class="kn">from</span> <span class="nn">src.torch.kge_models.HolE</span> <span class="kn">import</span> <span class="n">HolE</span>
+        <span class="kn">from</span> <span class="nn">src.torch.kge_models.RESCAL</span> <span class="kn">import</span> <span class="n">RESCAL</span>
+        <span class="kn">from</span> <span class="nn">src.torch.kge_models.TransD</span> <span class="kn">import</span> <span class="n">TransD</span>
+        <span class="kn">from</span> <span class="nn">src.torch.kge_models.TransE</span> <span class="kn">import</span> <span class="n">TransE</span>
+        <span class="kn">from</span> <span class="nn">src.torch.kge_models.TransH</span> <span class="kn">import</span> <span class="n">TransH</span>
+        <span class="kn">from</span> <span class="nn">src.torch.kge_models.TransR</span> <span class="kn">import</span> <span class="n">TransR</span>
+        <span class="kn">from</span> <span class="nn">src.torch.kge_models.RotatE</span> <span class="kn">import</span> <span class="n">RotatE</span>
+        <span class="c1">#from src.torch.kge_models.SimplE import SimplE</span>
+        <span class="kn">from</span> <span class="nn">src.torch.kge_models.TuckER</span> <span class="kn">import</span> <span class="n">TuckER</span>
+        <span class="kn">from</span> <span class="nn">src.torch.kge_models.ConvE</span> <span class="kn">import</span> <span class="n">ConvE</span>
+        <span class="kn">from</span> <span class="nn">src.torch.ea_models.trainer.attre_trainer</span> <span class="kn">import</span> <span class="n">attre_trainer</span>
+        <span class="kn">from</span> <span class="nn">src.torch.ea_models.trainer.bootea_trainer</span> <span class="kn">import</span> <span class="n">bootea_trainer</span>
+        <span class="kn">from</span> <span class="nn">src.torch.ea_models.trainer.gcn_align_trainer</span> <span class="kn">import</span> <span class="n">gcn_align_trainer</span>
+        <span class="kn">from</span> <span class="nn">src.torch.ea_models.trainer.imuse_trainer</span> <span class="kn">import</span> <span class="n">imuse_trainer</span>
+        <span class="kn">from</span> <span class="nn">src.torch.ea_models.trainer.iptranse_trainer</span> <span class="kn">import</span> <span class="n">iptranse_trainer</span>
+        <span class="kn">from</span> <span class="nn">src.torch.ea_models.trainer.jape_trainer</span> <span class="kn">import</span> <span class="n">jape_trainer</span>
+        <span class="kn">from</span> <span class="nn">src.torch.ea_models.trainer.mtranse_trainer</span> <span class="kn">import</span> <span class="n">mtranse_trainer</span>
+        <span class="kn">from</span> <span class="nn">src.torch.ea_models.trainer.rdgcn_trainer</span> <span class="kn">import</span> <span class="n">rdgcn_trainer</span>
+        <span class="kn">from</span> <span class="nn">src.torch.ea_models.trainer.sea_trainer</span> <span class="kn">import</span> <span class="n">sea_trainer</span>
+        <span class="kn">from</span> <span class="nn">src.torch.et_models.TransE_ET</span> <span class="kn">import</span> <span class="n">TransE_ET</span>
+        <span class="kn">from</span> <span class="nn">src.torch.et_models.RESCAL_ET</span> <span class="kn">import</span> <span class="n">RESCAL_ET</span>
+        <span class="kn">from</span> <span class="nn">src.torch.et_models.HolE_ET</span> <span class="kn">import</span> <span class="n">HolE_ET</span>
+        <span class="k">if</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;TransE&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">TransE</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;TransE_ET&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">TransE_ET</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;RESCAL_ET&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">RESCAL_ET</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="p">)</span> 
+        <span class="k">elif</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;HolE_ET&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">HolE_ET</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="p">)</span> 
+        <span class="k">elif</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;TransD&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">TransD</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;TransH&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">TransH</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;TransR&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">TransR</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;HolE&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">HolE</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;Analogy&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Analogy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;RESCAL&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">RESCAL</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;ComplEx&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ComplEx</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;DistMult&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">DistMult</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;RotatE&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">RotatE</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="p">)</span>
+        <span class="c1">#elif model_name == &#39;SimplE&#39;:</span>
+        <span class="c1">#    return SimplE(self.args, self.kgs)</span>
+        <span class="k">elif</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;TuckER&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">TuckER</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;ConvE&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ConvE</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="p">)</span>
+        <span class="c1"># load ea models</span>
+        <span class="k">if</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;AttrE&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">attre_trainer</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;BootEA&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">bootea_trainer</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;GCN_Align&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">gcn_align_trainer</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;IMUSE&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">imuse_trainer</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;JAPE&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">jape_trainer</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;MTransE&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">mtranse_trainer</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;IPtransE&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">iptranse_trainer</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;RDGCN&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">rdgcn_trainer</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;SEA&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">sea_trainer</span><span class="p">()</span>
+        <span class="c1"># self.SimplE = SimplE(kgs, args)</span>
+
+
+<div class="viewcode-block" id="kge_models"><a class="viewcode-back" href="../../../../contents/model.html#src.py.model.general_models.kge_models">[docs]</a><span class="k">class</span> <span class="nc">kge_models</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;This class provides a unified interface for the knowledge graph embedding models with pytorch and tf2.</span>
+<span class="sd">    You can select your model name and then use model.run(), model.test() and model.save() to simply support your</span>
+<span class="sd">    work. Models are continuously updated.</span>
+
+<span class="sd">    PyTorch: Currently supports TransE, TransR, TransH, TransD, TuckER, DisMult, ComplEx, HolE, Analogy, RESCAL, RotatE, SimplE and ConvE.</span>
+
+<span class="sd">    Tensorflow: Currently supports TransE and TransH.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    args: dict</span>
+<span class="sd">        A python dict from muKG.src.py.args. It stored detailed information about model</span>
+<span class="sd">        training and testing.</span>
+<span class="sd">    kg: muKG.src.py.KG</span>
+<span class="sd">        Store the whole information of a KG, like h_dict, r_dict, t_dict,</span>
+<span class="sd">        train_dataset, valid_dataset, test_dataset and so on.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kgs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="n">args</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kgs</span> <span class="o">=</span> <span class="n">kgs</span>
+
+<div class="viewcode-block" id="kge_models.get_model"><a class="viewcode-back" href="../../../../contents/model.html#src.py.model.general_models.kge_models.get_model">[docs]</a>    <span class="k">def</span> <span class="nf">get_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Select the specific model according to the model name.</span>
+
+<span class="sd">            Parameters</span>
+<span class="sd">            ----------</span>
+<span class="sd">            model_name: str</span>
+<span class="sd">                The correct name of the selected model. If the model has not been implemented, it will raise an</span>
+<span class="sd">                exception.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">module_exists</span><span class="p">():</span>
+            <span class="kn">from</span> <span class="nn">src.torch.kge_models.kge_trainer</span> <span class="kn">import</span> <span class="n">kge_trainer</span><span class="p">,</span> <span class="n">parallel_trainer</span>
+            <span class="n">mf</span> <span class="o">=</span> <span class="n">ModelFamily_torch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">is_torch</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">mod</span> <span class="o">=</span> <span class="n">mf</span><span class="o">.</span><span class="n">infer_model</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">mod</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Invalid input symbol or this version of the model is not implemented yet!&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">is_parallel</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">parallel_trainer</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">kge_trainer</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="p">,</span> <span class="n">mod</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">src.tf.kge_models.kge_trainer</span> <span class="kn">import</span> <span class="n">kge_trainer</span>
+            <span class="n">mf</span> <span class="o">=</span> <span class="n">ModelFamily_tf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">is_torch</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">mod</span> <span class="o">=</span> <span class="n">mf</span><span class="o">.</span><span class="n">infer_model</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">mod</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Invalid input symbol or this version of the model is not implemented yet!&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">kge_trainer</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="p">,</span> <span class="n">mod</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="kge_models.test"><a class="viewcode-back" href="../../../../contents/model.html#src.py.model.general_models.kge_models.test">[docs]</a>    <span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Test the selected model with the saved entity embedding and relation embedding.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">retest</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="kge_models.save"><a class="viewcode-back" href="../../../../contents/model.html#src.py.model.general_models.kge_models.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Save the selected model&#39;s entity embedding and relation embedding under the specific folder.</span>
+<span class="sd">        Default folder is output/results/model_name/dataset_name/torch(tf)/embedding.npy.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="kge_models.run"><a class="viewcode-back" href="../../../../contents/model.html#src.py.model.general_models.kge_models.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Train the selected model by calling kge_trainer.run().</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">run</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="ea_models"><a class="viewcode-back" href="../../../../contents/model.html#src.py.model.general_models.ea_models">[docs]</a><span class="k">class</span> <span class="nc">ea_models</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;This class provides a unified interface for the entity alignment models with pytorch and tf2.</span>
+<span class="sd">    You can select your model name and then use model.run(), model.test() and model.save() to simply support your</span>
+<span class="sd">    work. Models are continuously updated.</span>
+
+<span class="sd">    PyTorch: Currently supports MTransE, AttrE, SEA, GCN-Align, RDGCN, IPTransE, JAPE, BootEA and IMUSE.</span>
+
+<span class="sd">    Tensorflow: Currently supports MTransE, AttrE, SEA, GCN-Align, RDGCN, IPTransE, JAPE, BootEA, RSN and IMUSE.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    args: dict</span>
+<span class="sd">        A python dict from muKG.src.py.args. It stored detailed information about model</span>
+<span class="sd">        training and testing.</span>
+<span class="sd">    kgs: muKG.src.py.KGs</span>
+<span class="sd">        Store the whole information of two KGs, like uri_kg1, uri_kg2, uri_train_links, uri_test_links and so on.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kgs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="n">args</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kgs</span> <span class="o">=</span> <span class="n">kgs</span>
+
+<div class="viewcode-block" id="ea_models.get_model"><a class="viewcode-back" href="../../../../contents/model.html#src.py.model.general_models.ea_models.get_model">[docs]</a>    <span class="k">def</span> <span class="nf">get_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Select the specific model according to the model name.</span>
+
+<span class="sd">            Parameters</span>
+<span class="sd">            ----------</span>
+<span class="sd">            model_name: str</span>
+<span class="sd">                The correct name of the selected model. If the model has not been implemented, it will raise an</span>
+<span class="sd">                exception.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">module_exists</span><span class="p">():</span>
+            <span class="n">mf</span> <span class="o">=</span> <span class="n">ModelFamily_torch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">is_torch</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">mf</span><span class="o">.</span><span class="n">infer_model</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Invalid input symbol or this version of the model is not implemented yet!&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mf</span> <span class="o">=</span> <span class="n">ModelFamily_tf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">is_torch</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">mf</span><span class="o">.</span><span class="n">infer_model</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Invalid input symbol or this version of the model is not implemented yet!&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">set_args</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">set_kgs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">init</span><span class="p">()</span></div>
+            <span class="c1">#self.model.run()</span>
+
+<div class="viewcode-block" id="ea_models.test"><a class="viewcode-back" href="../../../../contents/model.html#src.py.model.general_models.ea_models.test">[docs]</a>    <span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Test the selected model with the saved entity embeddings of two KGs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">retest</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="ea_models.save"><a class="viewcode-back" href="../../../../contents/model.html#src.py.model.general_models.ea_models.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Save the selected model&#39;s entity embeddings under the specific folder.</span>
+<span class="sd">           Default folder is output/results/model_name/dataset_name/torch(tf)/embedding.npy.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="ea_models.run"><a class="viewcode-back" href="../../../../contents/model.html#src.py.model.general_models.ea_models.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Train the selected model by calling kge_trainer.run().</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">run</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="et_models"><a class="viewcode-back" href="../../../../contents/model.html#src.py.model.general_models.et_models">[docs]</a><span class="k">class</span> <span class="nc">et_models</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;This class provides a unified interface for the entity typing models with pytorch and tf2.</span>
+<span class="sd">    You can select your model name and then use model.run(), model.test() and model.save() to simply support your</span>
+<span class="sd">    work. Models are continuously updated.</span>
+
+<span class="sd">    PyTorch: Currently supports TransE_ET, HolE_ET and RESCAL_ET.</span>
+
+<span class="sd">    Tensorflow: Currently supports TransE_ET.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    args: dict</span>
+<span class="sd">        A python dict from muKG.src.py.args. It stored detailed information about model</span>
+<span class="sd">        training and testing.</span>
+<span class="sd">    kg: muKG.src.py.KG</span>
+<span class="sd">        Store the whole information of a KG, like h_dict, r_dict, t_dict,</span>
+<span class="sd">        train_dataset, valid_dataset, test_dataset and so on.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kgs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="n">args</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kgs</span> <span class="o">=</span> <span class="n">kgs</span>
+
+<div class="viewcode-block" id="et_models.get_model"><a class="viewcode-back" href="../../../../contents/model.html#src.py.model.general_models.et_models.get_model">[docs]</a>    <span class="k">def</span> <span class="nf">get_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Select the specific model according to the model name.</span>
+
+<span class="sd">            Parameters</span>
+<span class="sd">            ----------</span>
+<span class="sd">            model_name: str</span>
+<span class="sd">                The correct name of the selected model. If the model has not been implemented, it will raise an</span>
+<span class="sd">                exception.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">module_exists</span><span class="p">():</span>
+            <span class="kn">from</span> <span class="nn">src.torch.et_models.et_trainer</span> <span class="kn">import</span> <span class="n">et_trainer</span>
+            <span class="n">mf</span> <span class="o">=</span> <span class="n">ModelFamily_torch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">is_torch</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">mod</span> <span class="o">=</span> <span class="n">mf</span><span class="o">.</span><span class="n">infer_model</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">mod</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Invalid input symbol or this version of the model is not implemented yet!&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">et_trainer</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="p">,</span> <span class="n">mod</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">src.tf.et_models.et_trainer</span> <span class="kn">import</span> <span class="n">et_trainer</span>
+            <span class="n">mf</span> <span class="o">=</span> <span class="n">ModelFamily_tf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">is_torch</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">mod</span> <span class="o">=</span> <span class="n">mf</span><span class="o">.</span><span class="n">infer_model</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">mod</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Invalid input symbol or this version of the model is not implemented yet!&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">et_trainer</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="p">,</span> <span class="n">mod</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="et_models.test"><a class="viewcode-back" href="../../../../contents/model.html#src.py.model.general_models.et_models.test">[docs]</a>    <span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Test the selected model with the saved entity embeddings and a relation embedding.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">retest</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="et_models.save"><a class="viewcode-back" href="../../../../contents/model.html#src.py.model.general_models.et_models.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Save the selected model&#39;s entity embeddings and relation embedding(/type_of) under the specific folder.</span>
+<span class="sd">           Default folder is output/results/model_name/dataset_name/torch(tf)/embedding.npy.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="et_models.run"><a class="viewcode-back" href="../../../../contents/model.html#src.py.model.general_models.et_models.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Train the selected model by calling et_trainer.run().</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">run</span><span class="p">()</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, luoxindi.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

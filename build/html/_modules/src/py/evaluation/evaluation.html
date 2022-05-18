@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.py.evaluation.evaluation &mdash; muKG . documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html" class="icon icon-home"> muKG
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../tutorials/run.html">Training tutorials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/base.html">base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/evaluation.html">evaluation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/load.html">load</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/model.html">model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/util.html">util</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">muKG</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+      <li>src.py.evaluation.evaluation</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for src.py.evaluation.evaluation</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">gc</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">cos</span><span class="p">,</span> <span class="n">pi</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
+<span class="kn">from</span> <span class="nn">src.py.evaluation.alignment</span> <span class="kn">import</span> <span class="n">greedy_alignment</span>
+<span class="kn">from</span> <span class="nn">src.py.evaluation.similarity</span> <span class="kn">import</span> <span class="n">sim</span>
+<span class="kn">from</span> <span class="nn">src.py.util.util</span> <span class="kn">import</span> <span class="n">task_divide</span>
+
+
+<span class="k">def</span> <span class="nf">get_score</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">h</span> <span class="o">+</span> <span class="n">r</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">t</span>
+    <span class="sd">&#39;&#39;&#39;h_norm = np.linalg.norm(x=h, ord=2, axis=-1, keepdims=True)</span>
+<span class="sd">    r_norm = np.linalg.norm(x=r, ord=2, axis=-1, keepdims=True)</span>
+<span class="sd">    t_norm = np.linalg.norm(x=t, ord=2, axis=-1, keepdims=True)</span>
+<span class="sd">    h = h / h_norm</span>
+<span class="sd">    r = r / r_norm</span>
+<span class="sd">    t = t / t_norm</span>
+<span class="sd">    score = (h + r) - t</span>
+<span class="sd">    score = np.linalg.norm(score, 2, -1)&#39;&#39;&#39;</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">a</span> <span class="o">-</span> <span class="n">b</span><span class="p">,</span> <span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="n">a</span> <span class="o">-</span> <span class="n">b</span><span class="p">))</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">cos</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span> <span class="o">*</span> <span class="n">tmp</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">4</span>
+
+
+<span class="k">def</span> <span class="nf">get_rank</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span> <span class="n">low_values</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="n">true_data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">true</span><span class="p">))),</span> <span class="n">true</span><span class="p">]</span>
+    <span class="n">true_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">true_data</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">low_values</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">data</span> <span class="o">&lt;=</span> <span class="n">true_data</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">data</span> <span class="o">&gt;=</span> <span class="n">true_data</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">get_true_targets</span><span class="p">(</span><span class="n">dictionary</span><span class="p">,</span> <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span><span class="p">,</span> <span class="n">true_idx</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">true_targets</span> <span class="o">=</span> <span class="n">dictionary</span><span class="p">[(</span><span class="n">key1</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">key2</span><span class="p">[</span><span class="n">i</span><span class="p">])]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">true_idx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># true_targets.remove(true_idx[i])</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">true_targets</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">true_targets</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">true_targets</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">def</span> <span class="nf">filter_scores</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">dictionary</span><span class="p">,</span> <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span><span class="p">,</span> <span class="n">true_idx</span><span class="p">,</span> <span class="n">low_value</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="c1"># filter out the true negative samples by assigning - inf score.</span>
+    <span class="n">b_size</span> <span class="o">=</span> <span class="n">scores</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">filt_scores</span> <span class="o">=</span> <span class="n">scores</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">b_size</span><span class="p">):</span>
+        <span class="n">true_targets</span> <span class="o">=</span> <span class="n">get_true_targets</span><span class="p">(</span><span class="n">dictionary</span><span class="p">,</span> <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span><span class="p">,</span> <span class="n">true_idx</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">true_targets</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">low_value</span><span class="p">:</span>
+            <span class="n">filt_scores</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">true_targets</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;Inf&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">filt_scores</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">true_targets</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;Inf&#39;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">filt_scores</span>
+
+
+<span class="k">def</span> <span class="nf">parse_types</span><span class="p">(</span><span class="n">relation_set</span><span class="p">):</span>
+    <span class="n">subjects</span><span class="p">,</span> <span class="n">predicates</span><span class="p">,</span> <span class="n">objects</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(),</span> <span class="nb">list</span><span class="p">(),</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">o</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">relation_set</span><span class="p">:</span>
+        <span class="n">subjects</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="n">predicates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">objects</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">objects</span><span class="p">,</span> <span class="n">predicates</span><span class="p">,</span> <span class="n">subjects</span>
+
+
+<span class="k">def</span> <span class="nf">parse_triples</span><span class="p">(</span><span class="n">relation_set</span><span class="p">):</span>
+    <span class="n">subjects</span><span class="p">,</span> <span class="n">predicates</span><span class="p">,</span> <span class="n">objects</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(),</span> <span class="nb">list</span><span class="p">(),</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">o</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">relation_set</span><span class="p">:</span>
+        <span class="n">subjects</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="n">predicates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="n">objects</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">objects</span><span class="p">,</span> <span class="n">predicates</span><span class="p">,</span> <span class="n">subjects</span>
+
+
+<div class="viewcode-block" id="EntityTypeEvaluator"><a class="viewcode-back" href="../../../../contents/evaluation.html#src.py.evaluation.evaluation.EntityTypeEvaluator">[docs]</a><span class="k">class</span> <span class="nc">EntityTypeEvaluator</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Evaluate performance of given embedding using entity typing method.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        model: torch.nn.module</span>
+<span class="sd">            Embedding model inheriting from the right interface.</span>
+<span class="sd">        args: dict</span>
+<span class="sd">            A dict stored hyperparameters for models training and testing.</span>
+<span class="sd">        kg: muKG.py.load.KG</span>
+<span class="sd">            A python class stored detailed information of a KG.</span>
+<span class="sd">        is_valid: bool</span>
+<span class="sd">            If this value is true, this class will evaluate model with valid dataset.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kg</span><span class="p">,</span> <span class="n">is_valid</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">evaluated</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rank_true_heads</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rank_true_tails</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filt_rank_true_heads</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filt_rank_true_tails</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_valid</span> <span class="o">=</span> <span class="n">is_valid</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="n">args</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kg</span> <span class="o">=</span> <span class="n">kg</span>
+        <span class="c1"># self.freeze_model()</span>
+
+    <span class="k">def</span> <span class="nf">fomulate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">score</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">is_torch</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">score</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="sd">&#39;&#39;&#39; needs to be implemented with tf&#39;&#39;&#39;</span>
+            <span class="k">return</span> <span class="n">score</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">trans_load_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_valid</span><span class="p">:</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kg</span><span class="o">.</span><span class="n">valid_et_list</span><span class="p">)</span> <span class="o">/</span> <span class="mi">100</span><span class="p">)</span>
+            <span class="n">kg1_list</span> <span class="o">=</span> <span class="n">task_divide</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kg</span><span class="o">.</span><span class="n">valid_et_list</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kg</span><span class="o">.</span><span class="n">test_et_list</span><span class="p">)</span> <span class="o">/</span> <span class="mi">100</span><span class="p">)</span>
+            <span class="n">kg1_list</span> <span class="o">=</span> <span class="n">task_divide</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kg</span><span class="o">.</span><span class="n">test_et_list</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">kg1_list</span>
+
+<div class="viewcode-block" id="EntityTypeEvaluator.evaluate"><a class="viewcode-back" href="../../../../contents/evaluation.html#src.py.evaluation.evaluation.EntityTypeEvaluator.evaluate">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Evaluate the model&#39;s performance by predicting missing types.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">kg1_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">trans_load_data</span><span class="p">()</span>
+        <span class="c1"># candidate = ent_embeds</span>
+        <span class="c1"># candidate = np.expand_dims(candidate, 0).repeat(1000, axis=0)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rank_true_heads</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rank_true_tails</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filt_rank_true_heads</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filt_rank_true_tails</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+        <span class="k">for</span> <span class="n">triple_batch</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">kg1_list</span><span class="p">):</span>
+            <span class="n">head</span><span class="p">,</span> <span class="n">relation</span><span class="p">,</span> <span class="n">tail</span> <span class="o">=</span> <span class="n">parse_types</span><span class="p">(</span><span class="n">triple_batch</span><span class="p">)</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="n">h_embeds</span><span class="p">,</span> <span class="n">r_embeds</span><span class="p">,</span> <span class="n">t_embeds</span><span class="p">,</span> <span class="n">candidates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">get_embeddings</span><span class="p">(</span><span class="n">head</span><span class="p">,</span> <span class="n">relation</span><span class="p">,</span> <span class="n">tail</span><span class="p">)</span>
+            <span class="n">score</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fomulate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">get_score</span><span class="p">(</span><span class="n">h_embeds</span><span class="p">,</span> <span class="n">r_embeds</span><span class="p">,</span> <span class="n">candidates</span><span class="p">))</span>
+            <span class="n">filtered_score</span> <span class="o">=</span> <span class="n">filter_scores</span><span class="p">(</span><span class="n">score</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">kg</span><span class="o">.</span><span class="n">type_dict</span><span class="p">,</span> <span class="n">head</span><span class="p">,</span> <span class="n">relation</span><span class="p">,</span> <span class="n">tail</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rank_true_tails</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rank_true_tails</span><span class="p">,</span> <span class="n">get_rank</span><span class="p">(</span><span class="n">score</span><span class="p">,</span> <span class="n">tail</span><span class="p">,</span> <span class="kc">True</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filt_rank_true_tails</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filt_rank_true_tails</span><span class="p">,</span> <span class="n">get_rank</span><span class="p">(</span><span class="n">filtered_score</span><span class="p">,</span> <span class="n">tail</span><span class="p">,</span> <span class="kc">True</span><span class="p">))</span>
+            <span class="k">del</span> <span class="n">h_embeds</span><span class="p">,</span> <span class="n">r_embeds</span><span class="p">,</span> <span class="n">t_embeds</span><span class="p">,</span> <span class="n">candidates</span>
+            <span class="n">gc</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">evaluated</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">projected</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+    <span class="k">def</span> <span class="nf">mean_rank</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluated</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Evaluator not evaluated call &#39;&#39;LinkPredictionEvaluator.evaluate&#39;</span><span class="p">)</span>
+        <span class="n">sum_</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rank_true_tails</span><span class="p">))</span>
+        <span class="n">filt_sum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filt_rank_true_tails</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">sum_</span><span class="p">,</span> <span class="n">filt_sum</span>
+
+    <span class="k">def</span> <span class="nf">hit_at_k_tails</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluated</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Evaluator not evaluated call &#39;</span>
+                            <span class="s1">&#39;LinkPredictionEvaluator.evaluate&#39;</span><span class="p">)</span>
+        <span class="n">tail_hit</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rank_true_tails</span> <span class="o">&lt;=</span> <span class="n">k</span><span class="p">)</span>
+        <span class="n">filt_tail_hit</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filt_rank_true_tails</span> <span class="o">&lt;=</span> <span class="n">k</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">tail_hit</span><span class="p">,</span> <span class="n">filt_tail_hit</span>
+
+    <span class="k">def</span> <span class="nf">hit_at_k</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluated</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Evaluator not evaluated call &#39;</span>
+                            <span class="s1">&#39;LinkPredictionEvaluator.evaluate&#39;</span><span class="p">)</span>
+        <span class="n">tail_hit</span><span class="p">,</span> <span class="n">filt_tail_hit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hit_at_k_tails</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">tail_hit</span><span class="p">,</span> <span class="n">filt_tail_hit</span>
+
+    <span class="k">def</span> <span class="nf">mrr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluated</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Evaluator not evaluated call &#39;</span>
+                            <span class="s1">&#39;LinkPredictionEvaluator.evaluate&#39;</span><span class="p">)</span>
+        <span class="n">tail_mrr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rank_true_tails</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">filt_tail_mrr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filt_rank_true_tails</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">tail_mrr</span><span class="p">,</span> <span class="n">filt_tail_mrr</span>
+
+<div class="viewcode-block" id="EntityTypeEvaluator.print_results"><a class="viewcode-back" href="../../../../contents/evaluation.html#src.py.evaluation.evaluation.EntityTypeEvaluator.print_results">[docs]</a>    <span class="k">def</span> <span class="nf">print_results</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_digits</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Parameters</span>
+<span class="sd">            ----------</span>
+<span class="sd">            k: int or list</span>
+<span class="sd">                k (or list of k) such that hit@k will be printed.</span>
+<span class="sd">            n_digits: int</span>
+<span class="sd">                Number of digits to be printed for hit@k and MRR.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="mi">10</span>
+
+        <span class="k">if</span> <span class="n">k</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="o">==</span> <span class="nb">int</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Hit@</span><span class="si">{}</span><span class="s1"> : </span><span class="si">{}</span><span class="s1"> </span><span class="se">\t\t</span><span class="s1"> Filt. Hit@</span><span class="si">{}</span><span class="s1"> : </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">k</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hit_at_k</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="n">n_digits</span><span class="p">),</span>
+                <span class="n">k</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hit_at_k</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span> <span class="n">n_digits</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="o">==</span> <span class="nb">list</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">k</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Hit@</span><span class="si">{}</span><span class="s1"> : </span><span class="si">{}</span><span class="s1"> </span><span class="se">\t\t</span><span class="s1"> Filt. Hit@</span><span class="si">{}</span><span class="s1"> : </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">i</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hit_at_k</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="n">i</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="n">n_digits</span><span class="p">),</span>
+                    <span class="n">i</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hit_at_k</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="n">i</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span> <span class="n">n_digits</span><span class="p">)))</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Mean Rank : </span><span class="si">{}</span><span class="s1"> </span><span class="se">\t</span><span class="s1"> Filt. Mean Rank : </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mean_rank</span><span class="p">()[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mean_rank</span><span class="p">()[</span><span class="mi">1</span><span class="p">])))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;MRR : </span><span class="si">{}</span><span class="s1"> </span><span class="se">\t\t</span><span class="s1"> Filt. MRR : </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mrr</span><span class="p">()[</span><span class="mi">0</span><span class="p">],</span> <span class="n">n_digits</span><span class="p">),</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mrr</span><span class="p">()[</span><span class="mi">1</span><span class="p">],</span> <span class="n">n_digits</span><span class="p">)))</span></div></div>
+        <span class="c1"># self.activate_model()</span>
+
+
+<div class="viewcode-block" id="LinkPredictionEvaluator"><a class="viewcode-back" href="../../../../contents/evaluation.html#src.py.evaluation.evaluation.LinkPredictionEvaluator">[docs]</a><span class="k">class</span> <span class="nc">LinkPredictionEvaluator</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Evaluate performance of given embedding using link prediction method.</span>
+
+<span class="sd">            Parameters</span>
+<span class="sd">            ----------</span>
+<span class="sd">            model: torch.nn.module</span>
+<span class="sd">                Embedding model inheriting from the right interface.</span>
+<span class="sd">            args: dict</span>
+<span class="sd">                A dict stored hyperparameters for models training and testing.</span>
+<span class="sd">            kg: muKG.py.load.KG</span>
+<span class="sd">                A python class stored detailed information of a KG.</span>
+<span class="sd">            is_valid: bool</span>
+<span class="sd">                If this value is true, this class will evaluate model with valid dataset.</span>
+
+<span class="sd">            &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kg</span><span class="p">,</span> <span class="n">is_valid</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">evaluated</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rank_true_heads</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rank_true_tails</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filt_rank_true_heads</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filt_rank_true_tails</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_valid</span> <span class="o">=</span> <span class="n">is_valid</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="n">args</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kg</span> <span class="o">=</span> <span class="n">kg</span>
+        <span class="c1"># self.freeze_model()</span>
+
+    <span class="k">def</span> <span class="nf">fomulate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">score</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">is_torch</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">score</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="sd">&#39;&#39;&#39; needs to be implemented with tf&#39;&#39;&#39;</span>
+            <span class="k">return</span> <span class="n">score</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">trans_load_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_valid</span><span class="p">:</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kg</span><span class="o">.</span><span class="n">valid_relation_triples_list</span><span class="p">)</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">)</span>
+            <span class="n">kg1_list</span> <span class="o">=</span> <span class="n">task_divide</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kg</span><span class="o">.</span><span class="n">valid_relation_triples_list</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kg</span><span class="o">.</span><span class="n">test_relation_triples_list</span><span class="p">)</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">)</span>
+            <span class="n">kg1_list</span> <span class="o">=</span> <span class="n">task_divide</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kg</span><span class="o">.</span><span class="n">test_relation_triples_list</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">kg1_list</span>
+
+<div class="viewcode-block" id="LinkPredictionEvaluator.evaluate_t"><a class="viewcode-back" href="../../../../contents/evaluation.html#src.py.evaluation.evaluation.LinkPredictionEvaluator.evaluate_t">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_t</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Evaluate the model&#39;s performance by predicting missing tails in triples.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">kg1_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">trans_load_data</span><span class="p">()</span>
+        <span class="c1"># candidate = ent_embeds</span>
+        <span class="c1"># candidate = np.expand_dims(candidate, 0).repeat(1000, axis=0)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rank_true_heads</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rank_true_tails</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filt_rank_true_heads</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filt_rank_true_tails</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+        <span class="k">for</span> <span class="n">triple_batch</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">kg1_list</span><span class="p">):</span>
+            <span class="n">head</span><span class="p">,</span> <span class="n">relation</span><span class="p">,</span> <span class="n">tail</span> <span class="o">=</span> <span class="n">parse_triples</span><span class="p">(</span><span class="n">triple_batch</span><span class="p">)</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="n">h_embeds</span><span class="p">,</span> <span class="n">r_embeds</span><span class="p">,</span> <span class="n">t_embeds</span><span class="p">,</span> <span class="n">candidates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">get_embeddings</span><span class="p">(</span><span class="n">head</span><span class="p">,</span> <span class="n">relation</span><span class="p">,</span> <span class="n">tail</span><span class="p">)</span>
+            <span class="n">score</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fomulate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">get_score</span><span class="p">(</span><span class="n">h_embeds</span><span class="p">,</span> <span class="n">r_embeds</span><span class="p">,</span> <span class="n">candidates</span><span class="p">))</span>
+            <span class="n">filtered_score</span> <span class="o">=</span> <span class="n">filter_scores</span><span class="p">(</span><span class="n">score</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">kg</span><span class="o">.</span><span class="n">t_dict</span><span class="p">,</span> <span class="n">head</span><span class="p">,</span> <span class="n">relation</span><span class="p">,</span> <span class="n">tail</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">rank_true_tails</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rank_true_tails</span><span class="p">,</span> <span class="n">get_rank</span><span class="p">(</span><span class="n">score</span><span class="p">,</span> <span class="n">tail</span><span class="p">,</span> <span class="kc">True</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filt_rank_true_tails</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filt_rank_true_tails</span><span class="p">,</span> <span class="n">get_rank</span><span class="p">(</span><span class="n">filtered_score</span><span class="p">,</span> <span class="n">tail</span><span class="p">,</span> <span class="kc">True</span><span class="p">))</span>
+            <span class="k">del</span> <span class="n">h_embeds</span><span class="p">,</span> <span class="n">r_embeds</span><span class="p">,</span> <span class="n">t_embeds</span><span class="p">,</span> <span class="n">candidates</span>
+            <span class="n">gc</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">evaluated</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">projected</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="LinkPredictionEvaluator.evaluate"><a class="viewcode-back" href="../../../../contents/evaluation.html#src.py.evaluation.evaluation.LinkPredictionEvaluator.evaluate">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Evaluate the model&#39;s performance by predicting missing tails and heads in triples.</span>
+<span class="sd">            When you run models in PyTorch, we adjust you to add model.eval() and disable torch.grad here.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">kg1_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">trans_load_data</span><span class="p">()</span>
+        <span class="c1"># candidate = ent_embeds</span>
+        <span class="c1"># candidate = np.expand_dims(candidate, 0).repeat(1000, axis=0)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rank_true_heads</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rank_true_tails</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filt_rank_true_heads</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filt_rank_true_tails</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+        <span class="k">for</span> <span class="n">triple_batch</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">kg1_list</span><span class="p">):</span>
+            <span class="n">head</span><span class="p">,</span> <span class="n">relation</span><span class="p">,</span> <span class="n">tail</span> <span class="o">=</span> <span class="n">parse_triples</span><span class="p">(</span><span class="n">triple_batch</span><span class="p">)</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="n">h_embeds</span><span class="p">,</span> <span class="n">r_embeds</span><span class="p">,</span> <span class="n">t_embeds</span><span class="p">,</span> <span class="n">candidates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">get_embeddings</span><span class="p">(</span><span class="n">head</span><span class="p">,</span> <span class="n">relation</span><span class="p">,</span> <span class="n">tail</span><span class="p">)</span>
+            <span class="n">score</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fomulate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">get_score</span><span class="p">(</span><span class="n">h_embeds</span><span class="p">,</span> <span class="n">r_embeds</span><span class="p">,</span> <span class="n">candidates</span><span class="p">))</span>
+            <span class="n">filtered_score</span> <span class="o">=</span> <span class="n">filter_scores</span><span class="p">(</span><span class="n">score</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">kg</span><span class="o">.</span><span class="n">t_dict</span><span class="p">,</span> <span class="n">head</span><span class="p">,</span> <span class="n">relation</span><span class="p">,</span> <span class="n">tail</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">rank_true_tails</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rank_true_tails</span><span class="p">,</span> <span class="n">get_rank</span><span class="p">(</span><span class="n">score</span><span class="p">,</span> <span class="n">tail</span><span class="p">,</span> <span class="kc">True</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filt_rank_true_tails</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filt_rank_true_tails</span><span class="p">,</span> <span class="n">get_rank</span><span class="p">(</span><span class="n">filtered_score</span><span class="p">,</span> <span class="n">tail</span><span class="p">,</span> <span class="kc">True</span><span class="p">))</span>
+            <span class="n">score</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fomulate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">get_score</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">r_embeds</span><span class="p">,</span> <span class="n">t_embeds</span><span class="p">))</span>
+            <span class="n">filtered_score</span> <span class="o">=</span> <span class="n">filter_scores</span><span class="p">(</span><span class="n">score</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">kg</span><span class="o">.</span><span class="n">h_dict</span><span class="p">,</span> <span class="n">relation</span><span class="p">,</span> <span class="n">tail</span><span class="p">,</span> <span class="n">head</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rank_true_heads</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rank_true_heads</span><span class="p">,</span> <span class="n">get_rank</span><span class="p">(</span><span class="n">score</span><span class="p">,</span> <span class="n">head</span><span class="p">,</span> <span class="kc">True</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filt_rank_true_heads</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filt_rank_true_heads</span><span class="p">,</span> <span class="n">get_rank</span><span class="p">(</span><span class="n">filtered_score</span><span class="p">,</span> <span class="n">head</span><span class="p">,</span> <span class="kc">True</span><span class="p">))</span>
+            <span class="k">del</span> <span class="n">h_embeds</span><span class="p">,</span> <span class="n">r_embeds</span><span class="p">,</span> <span class="n">t_embeds</span><span class="p">,</span> <span class="n">candidates</span>
+            <span class="n">gc</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">evaluated</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">projected</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+    <span class="k">def</span> <span class="nf">mean_rank</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluated</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Evaluator not evaluated call &#39;&#39;LinkPredictionEvaluator.evaluate&#39;</span><span class="p">)</span>
+        <span class="n">sum_</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rank_true_heads</span><span class="p">)</span> <span class="o">+</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rank_true_tails</span><span class="p">))</span>
+        <span class="n">filt_sum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filt_rank_true_heads</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filt_rank_true_tails</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">sum_</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">filt_sum</span> <span class="o">/</span> <span class="mi">2</span>
+
+    <span class="k">def</span> <span class="nf">mean_rank_tails</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluated</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Evaluator not evaluated call &#39;&#39;LinkPredictionEvaluator.evaluate&#39;</span><span class="p">)</span>
+        <span class="n">sum_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rank_true_tails</span><span class="p">)</span>
+        <span class="n">filt_sum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filt_rank_true_tails</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">sum_</span><span class="p">,</span> <span class="n">filt_sum</span>
+
+    <span class="k">def</span> <span class="nf">hit_at_k_heads</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluated</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Evaluator not evaluated call &#39;</span>
+                            <span class="s1">&#39;LinkPredictionEvaluator.evaluate&#39;</span><span class="p">)</span>
+        <span class="n">head_hit</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rank_true_heads</span> <span class="o">&lt;=</span> <span class="n">k</span><span class="p">)</span>
+        <span class="n">filt_head_hit</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filt_rank_true_heads</span> <span class="o">&lt;=</span> <span class="n">k</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">head_hit</span><span class="p">,</span> <span class="n">filt_head_hit</span>
+
+    <span class="k">def</span> <span class="nf">hit_at_k_tails</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluated</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Evaluator not evaluated call &#39;</span>
+                            <span class="s1">&#39;LinkPredictionEvaluator.evaluate&#39;</span><span class="p">)</span>
+        <span class="n">tail_hit</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rank_true_tails</span> <span class="o">&lt;=</span> <span class="n">k</span><span class="p">)</span>
+        <span class="n">filt_tail_hit</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filt_rank_true_tails</span> <span class="o">&lt;=</span> <span class="n">k</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">tail_hit</span><span class="p">,</span> <span class="n">filt_tail_hit</span>
+
+    <span class="k">def</span> <span class="nf">hit_at_k</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluated</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Evaluator not evaluated call &#39;</span>
+                            <span class="s1">&#39;LinkPredictionEvaluator.evaluate&#39;</span><span class="p">)</span>
+
+        <span class="n">head_hit</span><span class="p">,</span> <span class="n">filt_head_hit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hit_at_k_heads</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">)</span>
+        <span class="n">tail_hit</span><span class="p">,</span> <span class="n">filt_tail_hit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hit_at_k_tails</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="n">head_hit</span> <span class="o">+</span> <span class="n">tail_hit</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="p">(</span><span class="n">filt_head_hit</span> <span class="o">+</span> <span class="n">filt_tail_hit</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+
+    <span class="k">def</span> <span class="nf">mrr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluated</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Evaluator not evaluated call &#39;</span>
+                            <span class="s1">&#39;LinkPredictionEvaluator.evaluate&#39;</span><span class="p">)</span>
+        <span class="n">head_mrr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rank_true_heads</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">tail_mrr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rank_true_tails</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">filt_head_mrr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filt_rank_true_heads</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">filt_tail_mrr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filt_rank_true_tails</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="p">((</span><span class="n">head_mrr</span> <span class="o">+</span> <span class="n">tail_mrr</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span>
+                <span class="p">(</span><span class="n">filt_head_mrr</span> <span class="o">+</span> <span class="n">filt_tail_mrr</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">mrr_tails</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluated</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Evaluator not evaluated call &#39;</span>
+                            <span class="s1">&#39;LinkPredictionEvaluator.evaluate&#39;</span><span class="p">)</span>
+        <span class="n">tail_mrr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rank_true_tails</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">filt_tail_mrr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filt_rank_true_tails</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="p">((</span><span class="n">tail_mrr</span><span class="p">),</span> <span class="p">(</span><span class="n">filt_tail_mrr</span><span class="p">))</span>
+
+<div class="viewcode-block" id="LinkPredictionEvaluator.print_results"><a class="viewcode-back" href="../../../../contents/evaluation.html#src.py.evaluation.evaluation.LinkPredictionEvaluator.print_results">[docs]</a>    <span class="k">def</span> <span class="nf">print_results</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_digits</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        k: int or list</span>
+<span class="sd">            k (or list of k) such that hit@k will be printed.</span>
+<span class="sd">        n_digits: int</span>
+<span class="sd">            Number of digits to be printed for hit@k and MRR.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">test_tail</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_t</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">top_k</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">test_tail</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="o">==</span> <span class="nb">int</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Hit@</span><span class="si">{}</span><span class="s1"> : </span><span class="si">{}</span><span class="s1"> </span><span class="se">\t\t</span><span class="s1"> Filt. Hit@</span><span class="si">{}</span><span class="s1"> : </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">k</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hit_at_k_tails</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">)[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">n_digits</span><span class="p">),</span>
+                    <span class="n">k</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hit_at_k_tails</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">)[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">n_digits</span><span class="p">)))</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="o">==</span> <span class="nb">list</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">k</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Hit@</span><span class="si">{}</span><span class="s1"> : </span><span class="si">{}</span><span class="s1"> </span><span class="se">\t\t</span><span class="s1"> Filt. Hit@</span><span class="si">{}</span><span class="s1"> : </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">i</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hit_at_k_tails</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="n">i</span><span class="p">)[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">n_digits</span><span class="p">),</span>
+                        <span class="n">i</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hit_at_k_tails</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="n">i</span><span class="p">)[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">n_digits</span><span class="p">)))</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Mean Rank : </span><span class="si">{}</span><span class="s1"> </span><span class="se">\t</span><span class="s1"> Filt. Mean Rank : </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mean_rank_tails</span><span class="p">()[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mean_rank_tails</span><span class="p">()[</span><span class="mi">1</span><span class="p">])))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;MRR : </span><span class="si">{}</span><span class="s1"> </span><span class="se">\t\t</span><span class="s1"> Filt. MRR : </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mrr_tails</span><span class="p">()[</span><span class="mi">0</span><span class="p">],</span> <span class="n">n_digits</span><span class="p">),</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mrr_tails</span><span class="p">()[</span><span class="mi">1</span><span class="p">],</span> <span class="n">n_digits</span><span class="p">)))</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="n">k</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="o">==</span> <span class="nb">int</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Hit@</span><span class="si">{}</span><span class="s1"> : </span><span class="si">{}</span><span class="s1"> </span><span class="se">\t\t</span><span class="s1"> Filt. Hit@</span><span class="si">{}</span><span class="s1"> : </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">k</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hit_at_k</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="n">n_digits</span><span class="p">),</span>
+                <span class="n">k</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hit_at_k</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span> <span class="n">n_digits</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="o">==</span> <span class="nb">list</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">k</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Hit@</span><span class="si">{}</span><span class="s1"> : </span><span class="si">{}</span><span class="s1"> </span><span class="se">\t\t</span><span class="s1"> Filt. Hit@</span><span class="si">{}</span><span class="s1"> : </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">i</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hit_at_k</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="n">i</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="n">n_digits</span><span class="p">),</span>
+                    <span class="n">i</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hit_at_k</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="n">i</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span> <span class="n">n_digits</span><span class="p">)))</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Mean Rank : </span><span class="si">{}</span><span class="s1"> </span><span class="se">\t</span><span class="s1"> Filt. Mean Rank : </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mean_rank</span><span class="p">()[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mean_rank</span><span class="p">()[</span><span class="mi">1</span><span class="p">])))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;MRR : </span><span class="si">{}</span><span class="s1"> </span><span class="se">\t\t</span><span class="s1"> Filt. MRR : </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mrr</span><span class="p">()[</span><span class="mi">0</span><span class="p">],</span> <span class="n">n_digits</span><span class="p">),</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mrr</span><span class="p">()[</span><span class="mi">1</span><span class="p">],</span> <span class="n">n_digits</span><span class="p">)))</span></div></div>
+        <span class="c1"># self.activate_model()</span>
+
+
+<div class="viewcode-block" id="valid"><a class="viewcode-back" href="../../../../contents/evaluation.html#src.py.evaluation.evaluation.valid">[docs]</a><span class="k">def</span> <span class="nf">valid</span><span class="p">(</span><span class="n">embeds1</span><span class="p">,</span> <span class="n">embeds2</span><span class="p">,</span> <span class="n">mapping</span><span class="p">,</span> <span class="n">top_k</span><span class="p">,</span> <span class="n">threads_num</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s1">&#39;inner&#39;</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">csls_k</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">accurate</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Valid entity alignment models performance by measuring the similarity of entity embedding pairs.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        embeds1: numpy</span>
+<span class="sd">            Entity embeddings of KG1.</span>
+<span class="sd">        embeds2: numpy</span>
+<span class="sd">            Entity embeddings of KG2.</span>
+<span class="sd">        mapping: numpy</span>
+<span class="sd">            The mapping matrix which transfer</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        is_torch: bool</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">mapping</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">hits1_12</span><span class="p">,</span> <span class="n">mr_12</span><span class="p">,</span> <span class="n">mrr_12</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">greedy_alignment</span><span class="p">(</span><span class="n">embeds1</span><span class="p">,</span> <span class="n">embeds2</span><span class="p">,</span> <span class="n">top_k</span><span class="p">,</span> <span class="n">threads_num</span><span class="p">,</span>
+                                                         <span class="n">metric</span><span class="p">,</span> <span class="n">normalize</span><span class="p">,</span> <span class="n">csls_k</span><span class="p">,</span> <span class="n">accurate</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">test_embeds1_mapped</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">embeds1</span><span class="p">,</span> <span class="n">mapping</span><span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">hits1_12</span><span class="p">,</span> <span class="n">mr_12</span><span class="p">,</span> <span class="n">mrr_12</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">greedy_alignment</span><span class="p">(</span><span class="n">test_embeds1_mapped</span><span class="p">,</span> <span class="n">embeds2</span><span class="p">,</span> <span class="n">top_k</span><span class="p">,</span> <span class="n">threads_num</span><span class="p">,</span>
+                                                         <span class="n">metric</span><span class="p">,</span> <span class="n">normalize</span><span class="p">,</span> <span class="n">csls_k</span><span class="p">,</span> <span class="n">accurate</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">hits1_12</span><span class="p">,</span> <span class="n">mrr_12</span></div>
+
+
+<span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="n">embeds1</span><span class="p">,</span> <span class="n">embeds2</span><span class="p">,</span> <span class="n">mapping</span><span class="p">,</span> <span class="n">top_k</span><span class="p">,</span> <span class="n">threads_num</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s1">&#39;inner&#39;</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">csls_k</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">accurate</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">mapping</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">alignment_rest_12</span><span class="p">,</span> <span class="n">hits1_12</span><span class="p">,</span> <span class="n">mr_12</span><span class="p">,</span> <span class="n">mrr_12</span><span class="p">,</span> <span class="n">sim_list</span> <span class="o">=</span> <span class="n">greedy_alignment</span><span class="p">(</span><span class="n">embeds1</span><span class="p">,</span> <span class="n">embeds2</span><span class="p">,</span> <span class="n">top_k</span><span class="p">,</span> <span class="n">threads_num</span><span class="p">,</span>
+                                                                                <span class="n">metric</span><span class="p">,</span> <span class="n">normalize</span><span class="p">,</span> <span class="n">csls_k</span><span class="p">,</span> <span class="n">accurate</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">test_embeds1_mapped</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">embeds1</span><span class="p">,</span> <span class="n">mapping</span><span class="p">)</span>
+        <span class="n">alignment_rest_12</span><span class="p">,</span> <span class="n">hits1_12</span><span class="p">,</span> <span class="n">mr_12</span><span class="p">,</span> <span class="n">mrr_12</span><span class="p">,</span> <span class="n">sim_list</span> <span class="o">=</span> <span class="n">greedy_alignment</span><span class="p">(</span><span class="n">test_embeds1_mapped</span><span class="p">,</span> <span class="n">embeds2</span><span class="p">,</span> <span class="n">top_k</span><span class="p">,</span>
+                                                                                <span class="n">threads_num</span><span class="p">,</span> <span class="n">metric</span><span class="p">,</span> <span class="n">normalize</span><span class="p">,</span> <span class="n">csls_k</span><span class="p">,</span>
+                                                                                <span class="n">accurate</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">alignment_rest_12</span><span class="p">,</span> <span class="n">hits1_12</span><span class="p">,</span> <span class="n">mrr_12</span><span class="p">,</span> <span class="n">sim_list</span>
+
+
+<span class="k">class</span> <span class="nc">entity_alignment_evaluation</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kgs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kgs</span> <span class="o">=</span> <span class="n">kgs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="n">args</span>
+
+    <span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">top_k</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">min_sim_value</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_file_name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute pairwise similarity between the two collections of embeddings.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        top_k : int</span>
+<span class="sd">            The k for top k retrieval, can be None (but then min_sim_value should be set).</span>
+<span class="sd">        min_sim_value : float, optional</span>
+<span class="sd">            the minimum value for the confidence.</span>
+<span class="sd">        output_file_name : str, optional</span>
+<span class="sd">            The name of the output file. It is formatted as tsv file with entity1, entity2, confidence.</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        topk_neighbors_w_sim : A list of tuples of form (entity1, entity2, confidence)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">embeds1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">ent_npy</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="o">.</span><span class="n">test_entities1</span><span class="p">]</span>
+        <span class="n">embeds2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">ent_npy</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="o">.</span><span class="n">test_entities2</span><span class="p">]</span>
+        <span class="n">mapping</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;GCN_Align&quot;</span><span class="p">:</span>
+            <span class="n">attr_embeds1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attr_npy</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="o">.</span><span class="n">test_entities1</span><span class="p">]</span>
+            <span class="n">attr_embeds2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attr_npy</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="o">.</span><span class="n">test_entities2</span><span class="p">]</span>
+            <span class="n">embeds1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">embeds1</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">beta</span><span class="p">,</span> <span class="n">attr_embeds1</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">beta</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">embeds2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">embeds2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">beta</span><span class="p">,</span> <span class="n">attr_embeds2</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">beta</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># if self.__class__.__name__ == &quot;MTransE&quot; or self.__class__.__name__ == &quot;SEA&quot; or self.__class__.__name__ == &quot;KDCoE&quot;:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">map_npy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">mapping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">map_npy</span>
+
+        <span class="c1"># search for correspondences which match top_k and/or min_sim_value</span>
+        <span class="n">test</span><span class="p">(</span><span class="n">embeds1</span><span class="p">,</span> <span class="n">embeds2</span><span class="p">,</span> <span class="n">mapping</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">top_k</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">test_threads_num</span><span class="p">,</span>
+             <span class="n">metric</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">eval_metric</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">eval_norm</span><span class="p">,</span> <span class="n">csls_k</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">accurate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">test</span><span class="p">(</span><span class="n">embeds1</span><span class="p">,</span> <span class="n">embeds2</span><span class="p">,</span> <span class="n">mapping</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">top_k</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">test_threads_num</span><span class="p">,</span>
+             <span class="n">metric</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">eval_metric</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">eval_norm</span><span class="p">,</span> <span class="n">csls_k</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">csls</span><span class="p">,</span> <span class="n">accurate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">predict_entities</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entities_file_path</span><span class="p">,</span> <span class="n">output_file_name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the confidence of given entities if they match or not.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        entities_file_path : str</span>
+<span class="sd">            A path pointing to a file formatted as (entity1, entity2) with tab separated (tsv-file).</span>
+<span class="sd">            If given, the similarity of the entities is retrieved and returned (or also written to file if output_file_name is given).</span>
+<span class="sd">            The parameters top_k and min_sim_value do not play a role, if this parameter is set.</span>
+<span class="sd">        output_file_name : str, optional</span>
+<span class="sd">            The name of the output file. It is formatted as tsv file with entity1, entity2, confidence.</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        topk_neighbors_w_sim : A list of tuples of form (entity1, entity2, confidence)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">kg1_entities</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="n">kg2_entities</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">entities_file_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">input_file</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">input_file</span><span class="p">:</span>
+                <span class="n">entities</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="n">kg1_entities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="o">.</span><span class="n">kg1</span><span class="o">.</span><span class="n">entities_id_dict</span><span class="p">[</span><span class="n">entities</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+                <span class="n">kg2_entities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="o">.</span><span class="n">kg2</span><span class="o">.</span><span class="n">entities_id_dict</span><span class="p">[</span><span class="n">entities</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+        <span class="n">kg1_distinct_entities</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">kg1_entities</span><span class="p">))</span>  <span class="c1"># make distinct</span>
+        <span class="n">kg2_distinct_entities</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">kg2_entities</span><span class="p">))</span>
+
+        <span class="n">kg1_mapping</span> <span class="o">=</span> <span class="p">{</span><span class="n">entity_id</span><span class="p">:</span> <span class="n">index</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">entity_id</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">kg1_distinct_entities</span><span class="p">)}</span>
+        <span class="n">kg2_mapping</span> <span class="o">=</span> <span class="p">{</span><span class="n">entity_id</span><span class="p">:</span> <span class="n">index</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">entity_id</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">kg2_distinct_entities</span><span class="p">)}</span>
+
+        <span class="n">embeds1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">ent_embeds</span><span class="p">(</span><span class="n">kg1_distinct_entities</span><span class="p">)</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+        <span class="n">embeds2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">ent_embeds</span><span class="p">(</span><span class="n">kg2_distinct_entities</span><span class="p">)</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">mapping_mat</span><span class="p">:</span>
+            <span class="n">embeds1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">embeds1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">mapping_mat</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="n">sim_mat</span> <span class="o">=</span> <span class="n">sim</span><span class="p">(</span><span class="n">embeds1</span><span class="p">,</span> <span class="n">embeds2</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">eval_metric</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">eval_norm</span><span class="p">,</span> <span class="n">csls_k</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># map back with entities_id_dict to be sure that the right uri is chosen</span>
+        <span class="n">kg1_id_to_uri</span> <span class="o">=</span> <span class="p">{</span><span class="n">v</span><span class="p">:</span> <span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="o">.</span><span class="n">kg1</span><span class="o">.</span><span class="n">entities_id_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="n">kg2_id_to_uri</span> <span class="o">=</span> <span class="p">{</span><span class="n">v</span><span class="p">:</span> <span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">kgs</span><span class="o">.</span><span class="n">kg2</span><span class="o">.</span><span class="n">entities_id_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+        <span class="n">topk_neighbors_w_sim</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">entity1_id</span><span class="p">,</span> <span class="n">entity2_id</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">kg1_entities</span><span class="p">,</span> <span class="n">kg2_entities</span><span class="p">):</span>
+            <span class="n">topk_neighbors_w_sim</span><span class="o">.</span><span class="n">append</span><span class="p">((</span>
+                <span class="n">kg1_id_to_uri</span><span class="p">[</span><span class="n">entity1_id</span><span class="p">],</span>
+                <span class="n">kg2_id_to_uri</span><span class="p">[</span><span class="n">entity2_id</span><span class="p">],</span>
+                <span class="n">sim_mat</span><span class="p">[</span><span class="n">kg1_mapping</span><span class="p">[</span><span class="n">entity1_id</span><span class="p">],</span> <span class="n">kg2_mapping</span><span class="p">[</span><span class="n">entity2_id</span><span class="p">]]</span>
+            <span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">output_file_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># create dir if not existent</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">out_folder</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">out_folder</span><span class="p">)</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">out_folder</span> <span class="o">+</span> <span class="n">output_file_name</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf8&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">entity1</span><span class="p">,</span> <span class="n">entity2</span><span class="p">,</span> <span class="n">confidence</span> <span class="ow">in</span> <span class="n">topk_neighbors_w_sim</span><span class="p">:</span>
+                    <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">entity1</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">entity2</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">confidence</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">out_folder</span> <span class="o">+</span> <span class="n">output_file_name</span><span class="p">,</span> <span class="s2">&quot;saved&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">topk_neighbors_w_sim</span>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, luoxindi.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

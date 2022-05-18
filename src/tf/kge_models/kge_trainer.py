@@ -91,13 +91,13 @@ class kge_trainer:
                         'batch_r': np.array([x[1] for x in datas]),
                         'batch_t': np.array([x[2] for x in datas])
                     }
-                    loss = self.model(data)
-                    """
+                    score = self.model(data)
+
                     self.batch_size = len(batch_pos)
                     po_score = self.get_pos_score(score)
                     ne_score = self.get_neg_score(score)
                     loss = get_loss_func_tfv2(po_score, ne_score, self.args)
-                    """
+
                 #print(self.model.trainable_variables)
                 gradients = tape.gradient(loss, self.model.trainable_variables)
                 #print(self.model.trainable_variables)

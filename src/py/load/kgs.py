@@ -5,6 +5,26 @@ from src.py.load.read import generate_sharing_id, generate_mapping_id, uris_rela
 
 
 class KGs:
+    """This class combines two KGs and generates ids for each entity and relation.
+
+        Parameters
+        ----------
+        kg1: muKG.src.py.load.KG
+            This object stored detailed information of KG1.
+        kg2: muKG.src.py.load.KG
+            This object stored detailed information of KG2.
+        train_links: list
+            List of train aligned pairs tuples (e1, e2) in two KGS.
+        valid_links: list, optional
+            List of valid aligned pairs tuples (e1, e2) in two KGS. Default value is None.
+        test_links: list
+            List of test aligned pairs tuples (e1, e2) in two KGS.
+        mode: str
+            This value can be sharing, mapping and swapping. Sharing mode assigns the same id to the pair of entities
+            that are already aligned. Mapping mode assigns unique ids to all entities. Swapping mode swaps the head
+            and tail entities in the training set triples of two KGs according to the already aligned entity pairs
+            to generate new triples.
+    """
     def __init__(self, kg1: KG, kg2: KG, train_links, test_links, valid_links=None, mode='mapping', ordered=True):
         if mode == "sharing":
             ent_ids1, ent_ids2 = generate_sharing_id(train_links, kg1.relation_triples_set, kg1.entities_set,

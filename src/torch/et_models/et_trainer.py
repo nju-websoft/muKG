@@ -64,7 +64,6 @@ class et_trainer:
         """
         triples_num = len(self.kgs.train_et_list)
         triple_steps = int(math.ceil(triples_num / self.args.batch_size))
-        steps_tasks = task_divide(list(range(triple_steps)), self.args.batch_threads_num)
         manager = mp.Manager()
         training_batch_queue = manager.Queue()
         neighbors1, neighbors2 = None, None

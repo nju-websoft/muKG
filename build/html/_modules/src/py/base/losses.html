@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.py.base.losses &mdash; muKG . documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html" class="icon icon-home"> muKG
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../tutorials/run.html">Training tutorials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/base.html">base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/evaluation.html">evaluation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/load.html">load</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/model.html">model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/util.html">util</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">muKG</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+      <li>src.py.base.losses</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for src.py.base.losses</h1><div class="highlight"><pre>
+<div class="viewcode-block" id="get_loss_func_tf"><a class="viewcode-back" href="../../../../contents/base.html#src.py.base.losses.get_loss_func_tf">[docs]</a><span></span><span class="k">def</span> <span class="nf">get_loss_func_tf</span><span class="p">(</span><span class="n">phs</span><span class="p">,</span> <span class="n">prs</span><span class="p">,</span> <span class="n">pts</span><span class="p">,</span> <span class="n">nhs</span><span class="p">,</span> <span class="n">nrs</span><span class="p">,</span> <span class="n">nts</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generate loss according to positive triples and negative triples for tensorflow.</span>
+
+<span class="sd">            Parameters</span>
+<span class="sd">            ----------</span>
+<span class="sd">            phs: torch.Tensor</span>
+<span class="sd">                Head tensor of positive triples.</span>
+<span class="sd">            prs: torch.Tensor</span>
+<span class="sd">                Relation tensor of positive triples.</span>
+<span class="sd">            pts: torch.Tensor</span>
+<span class="sd">                Tail tensor of positive triples.</span>
+<span class="sd">            nhs: torch.Tensor</span>
+<span class="sd">                Head tensor of negative triples.</span>
+<span class="sd">            nrs: torch.Tensor</span>
+<span class="sd">                Relation tensor of negative triples.</span>
+<span class="sd">            nts: torch.Tensor</span>
+<span class="sd">                Tail tensor of negative triples.</span>
+<span class="sd">            args: string</span>
+<span class="sd">                This parameter specifies three ways to generate losses, eg:margin-based, logistic and limited.</span>
+
+<span class="sd">            Returns</span>
+<span class="sd">            -------</span>
+<span class="sd">            loss: torch.Tensor</span>
+<span class="sd">                A tensor with gradients that need to be updated</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">triple_loss</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">loss</span> <span class="o">==</span> <span class="s1">&#39;margin-based&#39;</span><span class="p">:</span>
+        <span class="n">triple_loss</span> <span class="o">=</span> <span class="n">margin_loss_tf</span><span class="p">(</span><span class="n">phs</span><span class="p">,</span> <span class="n">prs</span><span class="p">,</span> <span class="n">pts</span><span class="p">,</span> <span class="n">nhs</span><span class="p">,</span> <span class="n">nrs</span><span class="p">,</span> <span class="n">nts</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">margin</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">loss_norm</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">args</span><span class="o">.</span><span class="n">loss</span> <span class="o">==</span> <span class="s1">&#39;logistic&#39;</span><span class="p">:</span>
+        <span class="n">triple_loss</span> <span class="o">=</span> <span class="n">logistic_loss_tf</span><span class="p">(</span><span class="n">phs</span><span class="p">,</span> <span class="n">prs</span><span class="p">,</span> <span class="n">pts</span><span class="p">,</span> <span class="n">nhs</span><span class="p">,</span> <span class="n">nrs</span><span class="p">,</span> <span class="n">nts</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">loss_norm</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">args</span><span class="o">.</span><span class="n">loss</span> <span class="o">==</span> <span class="s1">&#39;limited&#39;</span><span class="p">:</span>
+        <span class="n">triple_loss</span> <span class="o">=</span> <span class="n">limited_loss_tf</span><span class="p">(</span><span class="n">phs</span><span class="p">,</span> <span class="n">prs</span><span class="p">,</span> <span class="n">pts</span><span class="p">,</span> <span class="n">nhs</span><span class="p">,</span> <span class="n">nrs</span><span class="p">,</span> <span class="n">nts</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">pos_margin</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">neg_margin</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">loss_norm</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">triple_loss</span></div>
+
+
+<span class="k">def</span> <span class="nf">margin_loss_tf</span><span class="p">(</span><span class="n">phs</span><span class="p">,</span> <span class="n">prs</span><span class="p">,</span> <span class="n">pts</span><span class="p">,</span> <span class="n">nhs</span><span class="p">,</span> <span class="n">nrs</span><span class="p">,</span> <span class="n">nts</span><span class="p">,</span> <span class="n">margin</span><span class="p">,</span> <span class="n">loss_norm</span><span class="p">):</span>
+    <span class="kn">import</span> <span class="nn">tensorflow._api.v2.compat.v1</span> <span class="k">as</span> <span class="nn">tf</span>
+    <span class="n">tf</span><span class="o">.</span><span class="n">disable_eager_execution</span><span class="p">()</span>  <span class="c1"># 关闭eager运算</span>
+    <span class="n">tf</span><span class="o">.</span><span class="n">disable_v2_behavior</span><span class="p">()</span>  <span class="c1"># 禁用TensorFlow 2.x行为</span>
+    <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">name_scope</span><span class="p">(</span><span class="s1">&#39;margin_loss_distance&#39;</span><span class="p">):</span>
+        <span class="n">pos_distance</span> <span class="o">=</span> <span class="n">phs</span> <span class="o">+</span> <span class="n">prs</span> <span class="o">-</span> <span class="n">pts</span>
+        <span class="n">neg_distance</span> <span class="o">=</span> <span class="n">nhs</span> <span class="o">+</span> <span class="n">nrs</span> <span class="o">-</span> <span class="n">nts</span>
+        <span class="n">dim</span> <span class="o">=</span> <span class="n">pos_distance</span><span class="o">.</span><span class="n">get_shape</span><span class="p">()</span><span class="o">.</span><span class="n">as_list</span><span class="p">()[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">name_scope</span><span class="p">(</span><span class="s1">&#39;margin_loss&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">loss_norm</span> <span class="o">==</span> <span class="s1">&#39;L1&#39;</span><span class="p">:</span>  <span class="c1"># L1 normal</span>
+            <span class="n">pos_score</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">pos_distance</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">neg_score</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">neg_distance</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># L2 normal</span>
+            <span class="n">pos_score</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">pos_distance</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">neg_score</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">neg_distance</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="c1">#batch_size = pos_score.get_shape()</span>
+        <span class="c1">#print(batch_size)</span>
+        <span class="c1">#pos_score = tf.reshape(pos_score, [-1, dim])</span>
+        <span class="c1">#neg_score = tf.reshape(neg_score, [-1, dim])</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span><span class="n">margin</span><span class="p">)</span> <span class="o">+</span> <span class="n">pos_score</span> <span class="o">-</span> <span class="n">neg_score</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;margin_loss&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">loss</span>
+
+
+<span class="k">def</span> <span class="nf">logistic_loss_tf</span><span class="p">(</span><span class="n">phs</span><span class="p">,</span> <span class="n">prs</span><span class="p">,</span> <span class="n">pts</span><span class="p">,</span> <span class="n">nhs</span><span class="p">,</span> <span class="n">nrs</span><span class="p">,</span> <span class="n">nts</span><span class="p">,</span> <span class="n">loss_norm</span><span class="p">):</span>
+    <span class="kn">import</span> <span class="nn">tensorflow._api.v2.compat.v1</span> <span class="k">as</span> <span class="nn">tf</span>
+    <span class="n">tf</span><span class="o">.</span><span class="n">disable_eager_execution</span><span class="p">()</span>  <span class="c1"># 关闭eager运算</span>
+    <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">name_scope</span><span class="p">(</span><span class="s1">&#39;logistic_loss_distance&#39;</span><span class="p">):</span>
+        <span class="n">pos_distance</span> <span class="o">=</span> <span class="n">phs</span> <span class="o">+</span> <span class="n">prs</span> <span class="o">-</span> <span class="n">pts</span>
+        <span class="n">neg_distance</span> <span class="o">=</span> <span class="n">nhs</span> <span class="o">+</span> <span class="n">nrs</span> <span class="o">-</span> <span class="n">nts</span>
+    <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">name_scope</span><span class="p">(</span><span class="s1">&#39;logistic_loss_score&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">loss_norm</span> <span class="o">==</span> <span class="s1">&#39;L1&#39;</span><span class="p">:</span>  <span class="c1"># L1 score</span>
+            <span class="n">pos_score</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">pos_distance</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">neg_score</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">neg_distance</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># L2 score</span>
+            <span class="n">pos_score</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">pos_distance</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">neg_score</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">neg_distance</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">pos_loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">tf</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">pos_score</span><span class="p">)))</span>
+        <span class="n">neg_loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">tf</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">neg_score</span><span class="p">)))</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">pos_loss</span><span class="p">,</span> <span class="n">neg_loss</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;logistic_loss&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">loss</span>
+
+
+<span class="k">def</span> <span class="nf">limited_loss_tf</span><span class="p">(</span><span class="n">phs</span><span class="p">,</span> <span class="n">prs</span><span class="p">,</span> <span class="n">pts</span><span class="p">,</span> <span class="n">nhs</span><span class="p">,</span> <span class="n">nrs</span><span class="p">,</span> <span class="n">nts</span><span class="p">,</span> <span class="n">pos_margin</span><span class="p">,</span> <span class="n">neg_margin</span><span class="p">,</span> <span class="n">loss_norm</span><span class="p">,</span> <span class="n">balance</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+    <span class="kn">import</span> <span class="nn">tensorflow._api.v2.compat.v1</span> <span class="k">as</span> <span class="nn">tf</span>
+    <span class="n">tf</span><span class="o">.</span><span class="n">disable_eager_execution</span><span class="p">()</span>  <span class="c1"># 关闭eager运算</span>
+    <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">name_scope</span><span class="p">(</span><span class="s1">&#39;limited_loss_distance&#39;</span><span class="p">):</span>
+        <span class="n">pos_distance</span> <span class="o">=</span> <span class="n">phs</span> <span class="o">+</span> <span class="n">prs</span> <span class="o">-</span> <span class="n">pts</span>
+        <span class="n">neg_distance</span> <span class="o">=</span> <span class="n">nhs</span> <span class="o">+</span> <span class="n">nrs</span> <span class="o">-</span> <span class="n">nts</span>
+    <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">name_scope</span><span class="p">(</span><span class="s1">&#39;limited_loss_score&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">loss_norm</span> <span class="o">==</span> <span class="s1">&#39;L1&#39;</span><span class="p">:</span>  <span class="c1"># L1 score</span>
+            <span class="n">pos_score</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">pos_distance</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">neg_score</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">neg_distance</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># L2 score</span>
+            <span class="n">pos_score</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">pos_distance</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">neg_score</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">neg_distance</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">pos_loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">pos_score</span> <span class="o">-</span> <span class="n">tf</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span><span class="n">pos_margin</span><span class="p">)))</span>
+        <span class="n">neg_loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span><span class="n">neg_margin</span><span class="p">)</span> <span class="o">-</span> <span class="n">neg_score</span><span class="p">))</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">pos_loss</span><span class="p">,</span> <span class="n">balance</span> <span class="o">*</span> <span class="n">neg_loss</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;limited_loss&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">loss</span>
+
+
+<span class="k">def</span> <span class="nf">get_loss_func_tfv2</span><span class="p">(</span><span class="n">pos_score</span><span class="p">,</span> <span class="n">neg_score</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+    <span class="n">triple_loss</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">loss</span> <span class="o">==</span> <span class="s1">&#39;margin-based&#39;</span><span class="p">:</span>
+        <span class="n">triple_loss</span> <span class="o">=</span> <span class="n">margin_loss_tfv2</span><span class="p">(</span><span class="n">pos_score</span><span class="p">,</span> <span class="n">neg_score</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">margin</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">args</span><span class="o">.</span><span class="n">loss</span> <span class="o">==</span> <span class="s1">&#39;logistic&#39;</span><span class="p">:</span>
+        <span class="n">triple_loss</span> <span class="o">=</span> <span class="n">logistic_loss_tfv2</span><span class="p">(</span><span class="n">pos_score</span><span class="p">,</span> <span class="n">neg_score</span><span class="p">,</span> <span class="s1">&#39;L1&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">args</span><span class="o">.</span><span class="n">loss</span> <span class="o">==</span> <span class="s1">&#39;limited&#39;</span><span class="p">:</span>
+        <span class="n">triple_loss</span> <span class="o">=</span> <span class="n">limited_loss_tfv2</span><span class="p">(</span><span class="n">pos_score</span><span class="p">,</span> <span class="n">neg_score</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">pos_margin</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">neg_margin</span><span class="p">,</span> <span class="s1">&#39;L1&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">triple_loss</span>
+
+
+<span class="k">def</span> <span class="nf">margin_loss_tfv2</span><span class="p">(</span><span class="n">pos_score</span><span class="p">,</span> <span class="n">neg_score</span><span class="p">,</span> <span class="n">margin</span><span class="p">):</span>
+    <span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+    <span class="n">loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">margin</span> <span class="o">+</span> <span class="n">pos_score</span> <span class="o">-</span> <span class="n">neg_score</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">loss</span>
+
+
+<span class="k">def</span> <span class="nf">logistic_loss_tfv2</span><span class="p">(</span><span class="n">pos_score</span><span class="p">,</span> <span class="n">neg_score</span><span class="p">,</span> <span class="n">loss_norm</span><span class="p">):</span>
+    <span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+    <span class="k">if</span> <span class="n">loss_norm</span> <span class="o">==</span> <span class="s1">&#39;L1&#39;</span><span class="p">:</span>  <span class="c1"># L1 score</span>
+        <span class="n">pos_score</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">pos_score</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">neg_score</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">neg_score</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># L2 score</span>
+        <span class="n">pos_score</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">pos_score</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">neg_score</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">neg_score</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">pos_loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">tf</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">pos_score</span><span class="p">)))</span>
+    <span class="n">neg_loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">tf</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">neg_score</span><span class="p">)))</span>
+    <span class="n">loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">pos_loss</span><span class="p">,</span> <span class="n">neg_loss</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">loss</span>
+
+<span class="k">def</span> <span class="nf">limited_loss_tfv2</span><span class="p">(</span><span class="n">pos_score</span><span class="p">,</span> <span class="n">neg_score</span><span class="p">,</span> <span class="n">pos_margin</span><span class="p">,</span> <span class="n">neg_margin</span><span class="p">,</span> <span class="n">loss_norm</span><span class="p">,</span> <span class="n">balance</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+    <span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+    <span class="k">if</span> <span class="n">loss_norm</span> <span class="o">==</span> <span class="s1">&#39;L1&#39;</span><span class="p">:</span>  <span class="c1"># L1 score</span>
+        <span class="n">pos_score</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">pos_score</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">neg_score</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">neg_score</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># L2 score</span>
+        <span class="n">pos_score</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">pos_score</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">neg_score</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">neg_score</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">pos_loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">pos_score</span> <span class="o">-</span> <span class="n">tf</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span><span class="n">pos_margin</span><span class="p">)))</span>
+    <span class="n">neg_loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span><span class="n">neg_margin</span><span class="p">)</span> <span class="o">-</span> <span class="n">neg_score</span><span class="p">))</span>
+    <span class="n">loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">pos_loss</span><span class="p">,</span> <span class="n">balance</span> <span class="o">*</span> <span class="n">neg_loss</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;limited_loss&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">loss</span>
+
+
+<div class="viewcode-block" id="get_loss_func_torch"><a class="viewcode-back" href="../../../../contents/base.html#src.py.base.losses.get_loss_func_torch">[docs]</a><span class="k">def</span> <span class="nf">get_loss_func_torch</span><span class="p">(</span><span class="n">pos_score</span><span class="p">,</span> <span class="n">neg_score</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generate loss according to positive triples and negative triples for pytorch.</span>
+
+<span class="sd">                Parameters</span>
+<span class="sd">                ----------</span>
+<span class="sd">                phs: torch.Tensor</span>
+<span class="sd">                    Head tensor of positive triples.</span>
+<span class="sd">                prs: torch.Tensor</span>
+<span class="sd">                    Relation tensor of positive triples.</span>
+<span class="sd">                pts: torch.Tensor</span>
+<span class="sd">                    Tail tensor of positive triples.</span>
+<span class="sd">                nhs: torch.Tensor</span>
+<span class="sd">                    Head tensor of negative triples.</span>
+<span class="sd">                nrs: torch.Tensor</span>
+<span class="sd">                    Relation tensor of negative triples.</span>
+<span class="sd">                nts: torch.Tensor</span>
+<span class="sd">                    Tail tensor of negative triples.</span>
+<span class="sd">                args: string</span>
+<span class="sd">                    This parameter specifies four ways to generate losses, eg:margin-based, logistic, limited and logistic_adv.</span>
+<span class="sd">                Returns</span>
+<span class="sd">                -------</span>
+<span class="sd">                loss: torch.Tensor</span>
+<span class="sd">                    A tensor with gradients that need to be updated</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+    <span class="n">triple_loss</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">loss</span> <span class="o">==</span> <span class="s1">&#39;margin-based&#39;</span><span class="p">:</span>
+        <span class="n">triple_loss</span> <span class="o">=</span> <span class="n">margin_loss_torch</span><span class="p">(</span><span class="n">pos_score</span><span class="p">,</span> <span class="n">neg_score</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">margin</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">args</span><span class="o">.</span><span class="n">loss</span> <span class="o">==</span> <span class="s1">&#39;logistic&#39;</span><span class="p">:</span>
+        <span class="n">triple_loss</span> <span class="o">=</span> <span class="n">logistic_loss_torch</span><span class="p">(</span><span class="n">pos_score</span><span class="p">,</span> <span class="n">neg_score</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">args</span><span class="o">.</span><span class="n">loss</span> <span class="o">==</span> <span class="s1">&#39;logistic_adv&#39;</span><span class="p">:</span>
+        <span class="n">triple_loss</span> <span class="o">=</span> <span class="n">logistic_adv_loss_torch</span><span class="p">(</span><span class="n">pos_score</span><span class="p">,</span> <span class="n">neg_score</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">adv</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">args</span><span class="o">.</span><span class="n">loss</span> <span class="o">==</span> <span class="s1">&#39;limited&#39;</span><span class="p">:</span>
+        <span class="n">triple_loss</span> <span class="o">=</span> <span class="n">limited_loss_torch</span><span class="p">(</span><span class="n">pos_score</span><span class="p">,</span> <span class="n">neg_score</span><span class="p">,</span>  <span class="n">args</span><span class="o">.</span><span class="n">pos_margin</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">neg_margin</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">triple_loss</span></div>
+
+
+<div class="viewcode-block" id="logistic_adv_loss_torch"><a class="viewcode-back" href="../../../../contents/base.html#src.py.base.losses.logistic_adv_loss_torch">[docs]</a><span class="k">def</span> <span class="nf">logistic_adv_loss_torch</span><span class="p">(</span><span class="n">pos_score</span><span class="p">,</span> <span class="n">neg_score</span><span class="p">,</span> <span class="n">adv</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    pos_score: torch.Tensor</span>
+<span class="sd">        Scores of the true triplets as returned by the `forward` methods</span>
+<span class="sd">        of the models.</span>
+<span class="sd">    neg_score: torch.Tensor</span>
+<span class="sd">        Scores of the negative triplets as returned by the `forward`</span>
+<span class="sd">        methods of the models.</span>
+<span class="sd">    adv: int</span>
+<span class="sd">        Initialized by users.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    loss: torch.Tensor</span>
+<span class="sd">        Loss of the form log(1 + exp(eta * weights * f(h,r,t))</span>
+<span class="sd">        where f(h,r,t) is the score of the fact and eta</span>
+<span class="sd">        is either 1 or -1 if the fact is true or false. weights represents the importance of neg_score.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">torch</span>
+    <span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="nn">F</span>
+    <span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+    <span class="n">cr</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LogSigmoid</span><span class="p">()</span>
+    <span class="n">weights</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="o">-</span><span class="n">neg_score</span> <span class="o">*</span> <span class="n">adv</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+    <span class="k">return</span> <span class="o">-</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">cr</span><span class="p">(</span><span class="o">-</span><span class="n">pos_score</span><span class="p">))</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">weights</span> <span class="o">*</span> <span class="n">cr</span><span class="p">(</span><span class="n">neg_score</span><span class="p">)))</span> <span class="o">/</span> <span class="mi">2</span></div>
+
+
+<div class="viewcode-block" id="margin_loss_torch"><a class="viewcode-back" href="../../../../contents/base.html#src.py.base.losses.margin_loss_torch">[docs]</a><span class="k">def</span> <span class="nf">margin_loss_torch</span><span class="p">(</span><span class="n">pos_score</span><span class="p">,</span> <span class="n">neg_score</span><span class="p">,</span> <span class="n">margin</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    pos_score: torch.Tensor</span>
+<span class="sd">        Scores of the true triplets as returned by the `forward` methods of</span>
+<span class="sd">        the models.</span>
+<span class="sd">    neg_score: torch.Tensor</span>
+<span class="sd">        Scores of the negative triplets as returned by the `forward`</span>
+<span class="sd">        methods of the models.</span>
+<span class="sd">    margin: torch.Tensor</span>
+<span class="sd">        This value is initialized by users.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    loss: torch.Tensor</span>
+<span class="sd">        Loss of the form</span>
+<span class="sd">        max{0, margin - f(h,r,t) + f(h&#39;,r&#39;,t&#39;)} where</span>
+<span class="sd">        f(h,r,t) is the score of a true fact and</span>
+<span class="sd">        f(h&#39;,r&#39;,t&#39;) is the score of the associated negative fact.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">torch</span>
+    <span class="n">loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">relu_</span><span class="p">(</span><span class="n">margin</span> <span class="o">+</span> <span class="n">pos_score</span> <span class="o">-</span> <span class="n">neg_score</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">loss</span></div>
+
+
+<span class="k">def</span> <span class="nf">positive_loss_tf</span><span class="p">(</span><span class="n">phs</span><span class="p">,</span> <span class="n">prs</span><span class="p">,</span> <span class="n">pts</span><span class="p">,</span> <span class="n">loss_norm</span><span class="p">):</span>
+    <span class="kn">import</span> <span class="nn">tensorflow._api.v2.compat.v1</span> <span class="k">as</span> <span class="nn">tf</span>
+    <span class="n">tf</span><span class="o">.</span><span class="n">disable_eager_execution</span><span class="p">()</span>  <span class="c1"># 关闭eager运算</span>
+    <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">name_scope</span><span class="p">(</span><span class="s1">&#39;positive_loss_distance&#39;</span><span class="p">):</span>
+        <span class="n">pos_distance</span> <span class="o">=</span> <span class="n">phs</span> <span class="o">+</span> <span class="n">prs</span> <span class="o">-</span> <span class="n">pts</span>
+    <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">name_scope</span><span class="p">(</span><span class="s1">&#39;positive_loss_score&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">loss_norm</span> <span class="o">==</span> <span class="s1">&#39;L1&#39;</span><span class="p">:</span>  <span class="c1"># L1 score</span>
+            <span class="n">pos_score</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">pos_distance</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># L2 score</span>
+            <span class="n">pos_score</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">pos_distance</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">pos_score</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;positive_loss&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">loss</span>
+
+
+<span class="k">def</span> <span class="nf">positive_loss_torch</span><span class="p">(</span><span class="n">pos_score</span><span class="p">):</span>
+    <span class="kn">import</span> <span class="nn">torch</span>
+    <span class="n">loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">pos_score</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">loss</span>
+
+
+<div class="viewcode-block" id="limited_loss_torch"><a class="viewcode-back" href="../../../../contents/base.html#src.py.base.losses.limited_loss_torch">[docs]</a><span class="k">def</span> <span class="nf">limited_loss_torch</span><span class="p">(</span><span class="n">pos_score</span><span class="p">,</span> <span class="n">neg_score</span><span class="p">,</span> <span class="n">pos_margin</span><span class="p">,</span> <span class="n">neg_margin</span><span class="p">,</span> <span class="n">balance</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        pos_score: torch.Tensor</span>
+<span class="sd">            Scores of the true triplets as returned by the `forward` methods of</span>
+<span class="sd">            the models.</span>
+<span class="sd">        neg_score: torch.Tensor</span>
+<span class="sd">            Scores of the negative triplets as returned by the `forward`</span>
+<span class="sd">            methods of the models.</span>
+<span class="sd">        pos_margin: torch.Tensor</span>
+<span class="sd">            This value is initialized by users.</span>
+<span class="sd">        neg_margin: torch.Tensor</span>
+<span class="sd">            This value is initialized by users.</span>
+<span class="sd">        balance: float, optional</span>
+<span class="sd">            This value balances the neg_score and pos_score. Default value is 1.0.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        loss: torch.Tensor</span>
+<span class="sd">            Loss of the form</span>
+<span class="sd">            max{0, f(h,r,t) - pos_margin} + max{0, neg_margin - f(h&#39;,r&#39;,t&#39;)} where</span>
+<span class="sd">            f(h,r,t) is the score of a true fact and</span>
+<span class="sd">            f(h&#39;,r&#39;,t&#39;) is the score of the associated negative fact.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">torch</span>
+    <span class="n">pos_loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">pos_score</span> <span class="o">-</span> <span class="n">pos_margin</span><span class="p">))</span>
+    <span class="n">neg_loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">neg_margin</span> <span class="o">-</span> <span class="n">neg_score</span><span class="p">))</span>
+    <span class="n">loss</span> <span class="o">=</span> <span class="n">pos_loss</span> <span class="o">+</span> <span class="n">balance</span> <span class="o">*</span> <span class="n">neg_loss</span>
+    <span class="k">return</span> <span class="n">loss</span></div>
+
+
+<div class="viewcode-block" id="logistic_loss_torch"><a class="viewcode-back" href="../../../../contents/base.html#src.py.base.losses.logistic_loss_torch">[docs]</a><span class="k">def</span> <span class="nf">logistic_loss_torch</span><span class="p">(</span><span class="n">pos_score</span><span class="p">,</span> <span class="n">neg_score</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    pos_score: torch.Tensor</span>
+<span class="sd">        Scores of the true triplets as returned by the `forward` methods</span>
+<span class="sd">        of the models.</span>
+<span class="sd">    neg_score: torch.Tensor</span>
+<span class="sd">        Scores of the negative triplets as returned by the `forward`</span>
+<span class="sd">        methods of the models.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    loss: torch.Tensor</span>
+<span class="sd">        Loss of the form log(1+ exp(eta * f(h,r,t))`</span>
+<span class="sd">        where f(h,r,t) is the score of the fact and eta</span>
+<span class="sd">        is either 1 or -1 if the fact is true or false.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">torch</span>
+    <span class="n">pos_loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">pos_score</span><span class="p">)))</span>
+    <span class="n">neg_loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">neg_score</span><span class="p">)))</span>
+    <span class="n">loss</span> <span class="o">=</span> <span class="n">pos_loss</span> <span class="o">+</span> <span class="n">neg_loss</span>
+    <span class="k">return</span> <span class="n">loss</span></div>
+
+
+<span class="k">def</span> <span class="nf">get_weights</span><span class="p">(</span><span class="n">n_score</span><span class="p">,</span> <span class="n">adv</span><span class="p">):</span>
+    <span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="nn">F</span>
+    <span class="k">return</span> <span class="n">F</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">n_score</span> <span class="o">*</span> <span class="n">adv</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">mapping_loss_tf</span><span class="p">(</span><span class="n">tes1</span><span class="p">,</span> <span class="n">tes2</span><span class="p">,</span> <span class="n">mapping</span><span class="p">,</span> <span class="n">eye</span><span class="p">):</span>
+    <span class="kn">import</span> <span class="nn">tensorflow._api.v2.compat.v1</span> <span class="k">as</span> <span class="nn">tf</span>
+    <span class="n">tf</span><span class="o">.</span><span class="n">disable_eager_execution</span><span class="p">()</span>  <span class="c1"># 关闭eager运算</span>
+    <span class="n">mapped_tes2</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">tes1</span><span class="p">,</span> <span class="n">mapping</span><span class="p">)</span>
+    <span class="n">map_loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="n">tes2</span> <span class="o">-</span> <span class="n">mapped_tes2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">orthogonal_loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">mapping</span><span class="p">,</span> <span class="n">mapping</span><span class="p">,</span> <span class="n">transpose_b</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-</span> <span class="n">eye</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">map_loss</span> <span class="o">+</span> <span class="n">orthogonal_loss</span>
+
+
+<span class="k">def</span> <span class="nf">mapping_loss_torch</span><span class="p">(</span><span class="n">tes1</span><span class="p">,</span> <span class="n">tes2</span><span class="p">,</span> <span class="n">mapping</span><span class="p">,</span> <span class="n">eye</span><span class="p">):</span>
+    <span class="kn">import</span> <span class="nn">torch</span>
+    <span class="n">mapped_tes2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">tes1</span><span class="p">,</span> <span class="n">mapping</span><span class="p">)</span>
+    <span class="n">map_loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">tes2</span> <span class="o">-</span> <span class="n">mapped_tes2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">orthogonal_loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">mapping</span><span class="p">,</span> <span class="n">mapping</span><span class="o">.</span><span class="n">t</span><span class="p">())</span> <span class="o">-</span> <span class="n">eye</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">map_loss</span> <span class="o">+</span> <span class="n">orthogonal_loss</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, luoxindi.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

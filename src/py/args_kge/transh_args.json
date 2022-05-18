@@ -14,13 +14,13 @@
 	  
 	"learning_rate": 0.01,
     "optimizer": "Adagrad",
-	"max_epoch": 800,
+	"max_epoch": 50,
 	"batch_size": 5000,
 
 	"batch_threads_num": 2,
 
 	"ordered": true,
-	"start_valid": 50,
+	"start_valid": 10,
 	"eval_freq": 10,
 	"stop_metric": "hits1",
 	"top_k": [1, 5, 10, 50],

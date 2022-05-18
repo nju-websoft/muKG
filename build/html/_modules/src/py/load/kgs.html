@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.py.load.kgs &mdash; muKG . documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html" class="icon icon-home"> muKG
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../tutorials/run.html">Training tutorials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/base.html">base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/evaluation.html">evaluation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/load.html">load</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/model.html">model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/util.html">util</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">muKG</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+      <li>src.py.load.kgs</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for src.py.load.kgs</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">src.py.load.kg</span> <span class="kn">import</span> <span class="n">KG</span>
+<span class="kn">from</span> <span class="nn">src.py.load.read</span> <span class="kn">import</span> <span class="n">generate_sharing_id</span><span class="p">,</span> <span class="n">generate_mapping_id</span><span class="p">,</span> <span class="n">uris_relation_triple_2ids</span><span class="p">,</span> \
+    <span class="n">uris_attribute_triple_2ids</span><span class="p">,</span> <span class="n">uris_pair_2ids</span><span class="p">,</span> <span class="n">generate_sup_relation_triples</span><span class="p">,</span> <span class="n">generate_sup_attribute_triples</span><span class="p">,</span> \
+    <span class="n">read_relation_triples</span><span class="p">,</span> <span class="n">read_links</span><span class="p">,</span> <span class="n">read_attribute_triples</span><span class="p">,</span> <span class="n">read_kge_dataset</span><span class="p">,</span> <span class="n">read_dict</span><span class="p">,</span> <span class="n">read_types</span>
+
+
+<div class="viewcode-block" id="KGs"><a class="viewcode-back" href="../../../../contents/load.html#src.py.load.kgs.KGs">[docs]</a><span class="k">class</span> <span class="nc">KGs</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;This class combines two KGs and generates ids for each entity and relation.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        kg1: muKG.src.py.load.KG</span>
+<span class="sd">            This object stored detailed information of KG1.</span>
+<span class="sd">        kg2: muKG.src.py.load.KG</span>
+<span class="sd">            This object stored detailed information of KG2.</span>
+<span class="sd">        train_links: list</span>
+<span class="sd">            List of train aligned pairs tuples (e1, e2) in two KGS.</span>
+<span class="sd">        valid_links: list, optional</span>
+<span class="sd">            List of valid aligned pairs tuples (e1, e2) in two KGS. Default value is None.</span>
+<span class="sd">        test_links: list</span>
+<span class="sd">            List of test aligned pairs tuples (e1, e2) in two KGS.</span>
+<span class="sd">        mode: str</span>
+<span class="sd">            This value can be sharing, mapping and swapping. Sharing mode assigns the same id to the pair of entities</span>
+<span class="sd">            that are already aligned. Mapping mode assigns unique ids to all entities. Swapping mode swaps the head</span>
+<span class="sd">            and tail entities in the training set triples of two KGs according to the already aligned entity pairs</span>
+<span class="sd">            to generate new triples.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kg1</span><span class="p">:</span> <span class="n">KG</span><span class="p">,</span> <span class="n">kg2</span><span class="p">:</span> <span class="n">KG</span><span class="p">,</span> <span class="n">train_links</span><span class="p">,</span> <span class="n">test_links</span><span class="p">,</span> <span class="n">valid_links</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;mapping&#39;</span><span class="p">,</span> <span class="n">ordered</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;sharing&quot;</span><span class="p">:</span>
+            <span class="n">ent_ids1</span><span class="p">,</span> <span class="n">ent_ids2</span> <span class="o">=</span> <span class="n">generate_sharing_id</span><span class="p">(</span><span class="n">train_links</span><span class="p">,</span> <span class="n">kg1</span><span class="o">.</span><span class="n">relation_triples_set</span><span class="p">,</span> <span class="n">kg1</span><span class="o">.</span><span class="n">entities_set</span><span class="p">,</span>
+                                                     <span class="n">kg2</span><span class="o">.</span><span class="n">relation_triples_set</span><span class="p">,</span> <span class="n">kg2</span><span class="o">.</span><span class="n">entities_set</span><span class="p">,</span> <span class="n">ordered</span><span class="o">=</span><span class="n">ordered</span><span class="p">)</span>
+            <span class="n">rel_ids1</span><span class="p">,</span> <span class="n">rel_ids2</span> <span class="o">=</span> <span class="n">generate_sharing_id</span><span class="p">([],</span> <span class="n">kg1</span><span class="o">.</span><span class="n">relation_triples_set</span><span class="p">,</span> <span class="n">kg1</span><span class="o">.</span><span class="n">relations_set</span><span class="p">,</span>
+                                                     <span class="n">kg2</span><span class="o">.</span><span class="n">relation_triples_set</span><span class="p">,</span> <span class="n">kg2</span><span class="o">.</span><span class="n">relations_set</span><span class="p">,</span> <span class="n">ordered</span><span class="o">=</span><span class="n">ordered</span><span class="p">)</span>
+            <span class="n">attr_ids1</span><span class="p">,</span> <span class="n">attr_ids2</span> <span class="o">=</span> <span class="n">generate_sharing_id</span><span class="p">([],</span> <span class="n">kg1</span><span class="o">.</span><span class="n">attribute_triples_set</span><span class="p">,</span> <span class="n">kg1</span><span class="o">.</span><span class="n">attributes_set</span><span class="p">,</span>
+                                                       <span class="n">kg2</span><span class="o">.</span><span class="n">attribute_triples_set</span><span class="p">,</span> <span class="n">kg2</span><span class="o">.</span><span class="n">attributes_set</span><span class="p">,</span> <span class="n">ordered</span><span class="o">=</span><span class="n">ordered</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ent_ids1</span><span class="p">,</span> <span class="n">ent_ids2</span> <span class="o">=</span> <span class="n">generate_mapping_id</span><span class="p">(</span><span class="n">kg1</span><span class="o">.</span><span class="n">relation_triples_set</span><span class="p">,</span> <span class="n">kg1</span><span class="o">.</span><span class="n">entities_set</span><span class="p">,</span>
+                                                     <span class="n">kg2</span><span class="o">.</span><span class="n">relation_triples_set</span><span class="p">,</span> <span class="n">kg2</span><span class="o">.</span><span class="n">entities_set</span><span class="p">,</span> <span class="n">ordered</span><span class="o">=</span><span class="n">ordered</span><span class="p">)</span>
+            <span class="n">rel_ids1</span><span class="p">,</span> <span class="n">rel_ids2</span> <span class="o">=</span> <span class="n">generate_mapping_id</span><span class="p">(</span><span class="n">kg1</span><span class="o">.</span><span class="n">relation_triples_set</span><span class="p">,</span> <span class="n">kg1</span><span class="o">.</span><span class="n">relations_set</span><span class="p">,</span>
+                                                     <span class="n">kg2</span><span class="o">.</span><span class="n">relation_triples_set</span><span class="p">,</span> <span class="n">kg2</span><span class="o">.</span><span class="n">relations_set</span><span class="p">,</span> <span class="n">ordered</span><span class="o">=</span><span class="n">ordered</span><span class="p">)</span>
+            <span class="n">attr_ids1</span><span class="p">,</span> <span class="n">attr_ids2</span> <span class="o">=</span> <span class="n">generate_mapping_id</span><span class="p">(</span><span class="n">kg1</span><span class="o">.</span><span class="n">attribute_triples_set</span><span class="p">,</span> <span class="n">kg1</span><span class="o">.</span><span class="n">attributes_set</span><span class="p">,</span>
+                                                       <span class="n">kg2</span><span class="o">.</span><span class="n">attribute_triples_set</span><span class="p">,</span> <span class="n">kg2</span><span class="o">.</span><span class="n">attributes_set</span><span class="p">,</span> <span class="n">ordered</span><span class="o">=</span><span class="n">ordered</span><span class="p">)</span>
+        <span class="n">id_relation_triples1</span> <span class="o">=</span> <span class="n">uris_relation_triple_2ids</span><span class="p">(</span><span class="n">kg1</span><span class="o">.</span><span class="n">relation_triples_set</span><span class="p">,</span> <span class="n">ent_ids1</span><span class="p">,</span> <span class="n">rel_ids1</span><span class="p">)</span>
+        <span class="n">id_relation_triples2</span> <span class="o">=</span> <span class="n">uris_relation_triple_2ids</span><span class="p">(</span><span class="n">kg2</span><span class="o">.</span><span class="n">relation_triples_set</span><span class="p">,</span> <span class="n">ent_ids2</span><span class="p">,</span> <span class="n">rel_ids2</span><span class="p">)</span>
+
+        <span class="n">id_attribute_triples1</span> <span class="o">=</span> <span class="n">uris_attribute_triple_2ids</span><span class="p">(</span><span class="n">kg1</span><span class="o">.</span><span class="n">attribute_triples_set</span><span class="p">,</span> <span class="n">ent_ids1</span><span class="p">,</span> <span class="n">attr_ids1</span><span class="p">)</span>
+        <span class="n">id_attribute_triples2</span> <span class="o">=</span> <span class="n">uris_attribute_triple_2ids</span><span class="p">(</span><span class="n">kg2</span><span class="o">.</span><span class="n">attribute_triples_set</span><span class="p">,</span> <span class="n">ent_ids2</span><span class="p">,</span> <span class="n">attr_ids2</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">uri_kg1</span> <span class="o">=</span> <span class="n">kg1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">uri_kg2</span> <span class="o">=</span> <span class="n">kg2</span>
+
+        <span class="n">kg1</span> <span class="o">=</span> <span class="n">KG</span><span class="p">(</span><span class="n">id_relation_triples1</span><span class="p">,</span> <span class="n">id_attribute_triples1</span><span class="p">)</span>
+        <span class="n">kg2</span> <span class="o">=</span> <span class="n">KG</span><span class="p">(</span><span class="n">id_relation_triples2</span><span class="p">,</span> <span class="n">id_attribute_triples2</span><span class="p">)</span>
+        <span class="n">kg1</span><span class="o">.</span><span class="n">set_id_dict</span><span class="p">(</span><span class="n">ent_ids1</span><span class="p">,</span> <span class="n">rel_ids1</span><span class="p">,</span> <span class="n">attr_ids1</span><span class="p">)</span>
+        <span class="n">kg2</span><span class="o">.</span><span class="n">set_id_dict</span><span class="p">(</span><span class="n">ent_ids2</span><span class="p">,</span> <span class="n">rel_ids2</span><span class="p">,</span> <span class="n">attr_ids2</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">uri_train_links</span> <span class="o">=</span> <span class="n">train_links</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">uri_test_links</span> <span class="o">=</span> <span class="n">test_links</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train_links</span> <span class="o">=</span> <span class="n">uris_pair_2ids</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">uri_train_links</span><span class="p">,</span> <span class="n">ent_ids1</span><span class="p">,</span> <span class="n">ent_ids2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_links</span> <span class="o">=</span> <span class="n">uris_pair_2ids</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">uri_test_links</span><span class="p">,</span> <span class="n">ent_ids1</span><span class="p">,</span> <span class="n">ent_ids2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train_entities1</span> <span class="o">=</span> <span class="p">[</span><span class="n">link</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_links</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train_entities2</span> <span class="o">=</span> <span class="p">[</span><span class="n">link</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_links</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_entities1</span> <span class="o">=</span> <span class="p">[</span><span class="n">link</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_links</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_entities2</span> <span class="o">=</span> <span class="p">[</span><span class="n">link</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_links</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;swapping&#39;</span><span class="p">:</span>
+            <span class="n">sup_triples1</span><span class="p">,</span> <span class="n">sup_triples2</span> <span class="o">=</span> <span class="n">generate_sup_relation_triples</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">train_links</span><span class="p">,</span>
+                                                                       <span class="n">kg1</span><span class="o">.</span><span class="n">rt_dict</span><span class="p">,</span> <span class="n">kg1</span><span class="o">.</span><span class="n">hr_dict</span><span class="p">,</span>
+                                                                       <span class="n">kg2</span><span class="o">.</span><span class="n">rt_dict</span><span class="p">,</span> <span class="n">kg2</span><span class="o">.</span><span class="n">hr_dict</span><span class="p">)</span>
+            <span class="n">kg1</span><span class="o">.</span><span class="n">add_sup_relation_triples</span><span class="p">(</span><span class="n">sup_triples1</span><span class="p">)</span>
+            <span class="n">kg2</span><span class="o">.</span><span class="n">add_sup_relation_triples</span><span class="p">(</span><span class="n">sup_triples2</span><span class="p">)</span>
+
+            <span class="n">sup_triples1</span><span class="p">,</span> <span class="n">sup_triples2</span> <span class="o">=</span> <span class="n">generate_sup_attribute_triples</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">train_links</span><span class="p">,</span> <span class="n">kg1</span><span class="o">.</span><span class="n">av_dict</span><span class="p">,</span> <span class="n">kg2</span><span class="o">.</span><span class="n">av_dict</span><span class="p">)</span>
+            <span class="n">kg1</span><span class="o">.</span><span class="n">add_sup_attribute_triples</span><span class="p">(</span><span class="n">sup_triples1</span><span class="p">)</span>
+            <span class="n">kg2</span><span class="o">.</span><span class="n">add_sup_attribute_triples</span><span class="p">(</span><span class="n">sup_triples2</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">kg1</span> <span class="o">=</span> <span class="n">kg1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kg2</span> <span class="o">=</span> <span class="n">kg2</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">valid_links</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">valid_entities1</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">valid_entities2</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">valid_links</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">uri_valid_links</span> <span class="o">=</span> <span class="n">valid_links</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">valid_links</span> <span class="o">=</span> <span class="n">uris_pair_2ids</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">uri_valid_links</span><span class="p">,</span> <span class="n">ent_ids1</span><span class="p">,</span> <span class="n">ent_ids2</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">valid_entities1</span> <span class="o">=</span> <span class="p">[</span><span class="n">link</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid_links</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">valid_entities2</span> <span class="o">=</span> <span class="p">[</span><span class="n">link</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid_links</span><span class="p">]</span>
+
+        <span class="c1"># self.useful_entities_list1 = self.train_entities1 + self.valid_entities1 + self.test_entities1</span>
+        <span class="c1"># self.useful_entities_list2 = self.train_entities2 + self.valid_entities2 + self.test_entities2</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">useful_entities_list1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kg1</span><span class="o">.</span><span class="n">entities_list</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">useful_entities_list2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kg2</span><span class="o">.</span><span class="n">entities_list</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">entities_num</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kg1</span><span class="o">.</span><span class="n">entities_set</span> <span class="o">|</span> <span class="bp">self</span><span class="o">.</span><span class="n">kg2</span><span class="o">.</span><span class="n">entities_set</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relations_num</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kg1</span><span class="o">.</span><span class="n">relations_set</span> <span class="o">|</span> <span class="bp">self</span><span class="o">.</span><span class="n">kg2</span><span class="o">.</span><span class="n">relations_set</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attributes_num</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kg1</span><span class="o">.</span><span class="n">attributes_set</span> <span class="o">|</span> <span class="bp">self</span><span class="o">.</span><span class="n">kg2</span><span class="o">.</span><span class="n">attributes_set</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="read_kgs_from_folder"><a class="viewcode-back" href="../../../../contents/load.html#src.py.load.kgs.read_kgs_from_folder">[docs]</a><span class="k">def</span> <span class="nf">read_kgs_from_folder</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">training_data_folder</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">ordered</span><span class="p">,</span> <span class="n">remove_unlinked</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;if &#39;dbp15k&#39; in training_data_folder.lower() or &#39;dwy100k&#39; in training_data_folder.lower():</span>
+<span class="sd">        return read_kgs_from_dbp_dwy(training_data_folder, division, mode, ordered, remove_unlinked=remove_unlinked)&#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">task</span> <span class="o">==</span> <span class="s1">&#39;ea&#39;</span><span class="p">:</span>
+        <span class="n">kg1_relation_triples</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">read_relation_triples</span><span class="p">(</span><span class="n">training_data_folder</span> <span class="o">+</span> <span class="s1">&#39;rel_triples_1&#39;</span><span class="p">)</span>
+        <span class="n">kg2_relation_triples</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">read_relation_triples</span><span class="p">(</span><span class="n">training_data_folder</span> <span class="o">+</span> <span class="s1">&#39;rel_triples_2&#39;</span><span class="p">)</span>
+        <span class="n">kg1_attribute_triples</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">read_attribute_triples</span><span class="p">(</span><span class="n">training_data_folder</span> <span class="o">+</span> <span class="s1">&#39;attr_triples_1&#39;</span><span class="p">)</span>
+        <span class="n">kg2_attribute_triples</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">read_attribute_triples</span><span class="p">(</span><span class="n">training_data_folder</span> <span class="o">+</span> <span class="s1">&#39;attr_triples_2&#39;</span><span class="p">)</span>
+
+        <span class="n">train_links</span> <span class="o">=</span> <span class="n">read_links</span><span class="p">(</span><span class="n">training_data_folder</span> <span class="o">+</span> <span class="n">division</span> <span class="o">+</span> <span class="s1">&#39;train_links&#39;</span><span class="p">)</span>
+        <span class="n">valid_links</span> <span class="o">=</span> <span class="n">read_links</span><span class="p">(</span><span class="n">training_data_folder</span> <span class="o">+</span> <span class="n">division</span> <span class="o">+</span> <span class="s1">&#39;valid_links&#39;</span><span class="p">)</span>
+        <span class="n">test_links</span> <span class="o">=</span> <span class="n">read_links</span><span class="p">(</span><span class="n">training_data_folder</span> <span class="o">+</span> <span class="n">division</span> <span class="o">+</span> <span class="s1">&#39;test_links&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">remove_unlinked</span><span class="p">:</span>
+            <span class="n">links</span> <span class="o">=</span> <span class="n">train_links</span> <span class="o">+</span> <span class="n">valid_links</span> <span class="o">+</span> <span class="n">test_links</span>
+            <span class="n">kg1_relation_triples</span> <span class="o">=</span> <span class="n">remove_unlinked_triples</span><span class="p">(</span><span class="n">kg1_relation_triples</span><span class="p">,</span> <span class="n">links</span><span class="p">)</span>
+            <span class="n">kg2_relation_triples</span> <span class="o">=</span> <span class="n">remove_unlinked_triples</span><span class="p">(</span><span class="n">kg2_relation_triples</span><span class="p">,</span> <span class="n">links</span><span class="p">)</span>
+
+        <span class="n">kg1</span> <span class="o">=</span> <span class="n">KG</span><span class="p">(</span><span class="n">kg1_relation_triples</span><span class="p">,</span> <span class="n">kg1_attribute_triples</span><span class="p">)</span>
+        <span class="n">kg2</span> <span class="o">=</span> <span class="n">KG</span><span class="p">(</span><span class="n">kg2_relation_triples</span><span class="p">,</span> <span class="n">kg2_attribute_triples</span><span class="p">)</span>
+        <span class="n">kgs</span> <span class="o">=</span> <span class="n">KGs</span><span class="p">(</span><span class="n">kg1</span><span class="p">,</span> <span class="n">kg2</span><span class="p">,</span> <span class="n">train_links</span><span class="p">,</span> <span class="n">test_links</span><span class="p">,</span> <span class="n">valid_links</span><span class="o">=</span><span class="n">valid_links</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span> <span class="n">ordered</span><span class="o">=</span><span class="n">ordered</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">task</span> <span class="o">==</span> <span class="s1">&#39;lp&#39;</span><span class="p">:</span>
+        <span class="n">kg1_relation_triples</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">read_kge_dataset</span><span class="p">(</span><span class="n">training_data_folder</span> <span class="o">+</span> <span class="s1">&#39;train2id.txt&#39;</span><span class="p">)</span>
+        <span class="n">kg1_valid_triples</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">read_kge_dataset</span><span class="p">(</span><span class="n">training_data_folder</span> <span class="o">+</span> <span class="s1">&#39;valid2id.txt&#39;</span><span class="p">)</span>
+        <span class="n">kg1_test_triples</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">read_kge_dataset</span><span class="p">(</span><span class="n">training_data_folder</span> <span class="o">+</span> <span class="s1">&#39;test2id.txt&#39;</span><span class="p">)</span>
+        <span class="n">kgs</span> <span class="o">=</span> <span class="n">KG</span><span class="p">(</span><span class="n">kg1_relation_triples</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="n">kgs</span><span class="o">.</span><span class="n">set_valid_relations</span><span class="p">(</span><span class="n">kg1_valid_triples</span><span class="p">)</span>
+        <span class="n">kgs</span><span class="o">.</span><span class="n">set_test_relations</span><span class="p">(</span><span class="n">kg1_test_triples</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">kg1_relation_triples</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">read_kge_dataset</span><span class="p">(</span><span class="n">training_data_folder</span> <span class="o">+</span> <span class="s1">&#39;train2id.txt&#39;</span><span class="p">)</span>
+        <span class="n">kg1_valid_triples</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">read_kge_dataset</span><span class="p">(</span><span class="n">training_data_folder</span> <span class="o">+</span> <span class="s1">&#39;valid2id.txt&#39;</span><span class="p">)</span>
+        <span class="n">kg1_test_triples</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">read_kge_dataset</span><span class="p">(</span><span class="n">training_data_folder</span> <span class="o">+</span> <span class="s1">&#39;test2id.txt&#39;</span><span class="p">)</span>
+        <span class="n">kg1_train_type</span> <span class="o">=</span> <span class="n">read_types</span><span class="p">(</span><span class="n">training_data_folder</span> <span class="o">+</span> <span class="s1">&#39;type_train2id.txt&#39;</span><span class="p">)</span>
+        <span class="n">kg1_valid_type</span> <span class="o">=</span> <span class="n">read_types</span><span class="p">(</span><span class="n">training_data_folder</span> <span class="o">+</span> <span class="s1">&#39;type_valid2id.txt&#39;</span><span class="p">)</span>
+        <span class="n">kg1_test_type</span> <span class="o">=</span> <span class="n">read_types</span><span class="p">(</span><span class="n">training_data_folder</span> <span class="o">+</span> <span class="s1">&#39;type_test2id.txt&#39;</span><span class="p">)</span>
+        <span class="n">kgs</span> <span class="o">=</span> <span class="n">KG</span><span class="p">(</span><span class="n">kg1_relation_triples</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="n">kgs</span><span class="o">.</span><span class="n">set_valid_relations</span><span class="p">(</span><span class="n">kg1_valid_triples</span><span class="p">)</span>
+        <span class="n">kgs</span><span class="o">.</span><span class="n">set_test_relations</span><span class="p">(</span><span class="n">kg1_test_triples</span><span class="p">)</span>
+        <span class="c1"># Here we pass there tuple lists to KG</span>
+        <span class="n">kgs</span><span class="o">.</span><span class="n">set_type_list</span><span class="p">(</span><span class="n">kg1_train_type</span><span class="p">,</span> <span class="n">kg1_valid_type</span><span class="p">,</span> <span class="n">kg1_test_type</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">kgs</span></div>
+
+
+<span class="k">def</span> <span class="nf">remove_unlinked_triples</span><span class="p">(</span><span class="n">triples</span><span class="p">,</span> <span class="n">links</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;before removing unlinked triples:&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">triples</span><span class="p">))</span>
+    <span class="n">linked_entities</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">links</span><span class="p">:</span>
+        <span class="n">linked_entities</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">linked_entities</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">j</span><span class="p">)</span>
+    <span class="n">linked_triples</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">h</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">triples</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">linked_entities</span> <span class="ow">and</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">linked_entities</span><span class="p">:</span>
+            <span class="n">linked_triples</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="n">h</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">t</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;after removing unlinked triples:&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">linked_triples</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">linked_triples</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, luoxindi.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

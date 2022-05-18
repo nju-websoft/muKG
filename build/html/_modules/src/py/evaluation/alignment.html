@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.py.evaluation.alignment &mdash; muKG . documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html" class="icon icon-home"> muKG
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../tutorials/run.html">Training tutorials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/base.html">base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/evaluation.html">evaluation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/load.html">load</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/model.html">model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/util.html">util</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">muKG</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+      <li>src.py.evaluation.alignment</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for src.py.evaluation.alignment</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">gc</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">multiprocessing</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="c1">#from scipy.spatial.distance import cdist</span>
+
+<span class="c1"># from src.modules.finding.similarity import sim</span>
+<span class="kn">from</span> <span class="nn">src.py.evaluation.similarity</span> <span class="kn">import</span> <span class="n">sim</span>
+<span class="kn">from</span> <span class="nn">src.py.util.util</span> <span class="kn">import</span> <span class="n">merge_dic</span>
+
+
+<span class="k">def</span> <span class="nf">task_divide</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="mi">0</span> <span class="o">==</span> <span class="n">total</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="n">total</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">n</span> <span class="o">==</span> <span class="n">total</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">idx</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="n">total</span> <span class="o">//</span> <span class="n">n</span>
+        <span class="n">tasks</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">j</span><span class="p">,</span> <span class="n">j</span><span class="p">):</span>
+            <span class="n">tasks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">idx</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span> <span class="o">+</span> <span class="n">j</span><span class="p">])</span>
+        <span class="n">tasks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">idx</span><span class="p">[(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">j</span><span class="p">:])</span>
+        <span class="k">return</span> <span class="n">tasks</span>
+
+
+<div class="viewcode-block" id="greedy_alignment"><a class="viewcode-back" href="../../../../contents/evaluation.html#src.py.evaluation.alignment.greedy_alignment">[docs]</a><span class="k">def</span> <span class="nf">greedy_alignment</span><span class="p">(</span><span class="n">embed1</span><span class="p">,</span> <span class="n">embed2</span><span class="p">,</span> <span class="n">top_k</span><span class="p">,</span> <span class="n">nums_threads</span><span class="p">,</span> <span class="n">metric</span><span class="p">,</span> <span class="n">normalize</span><span class="p">,</span> <span class="n">csls_k</span><span class="p">,</span> <span class="n">accurate</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Search alignment with greedy strategy.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        embed1 : matrix_like</span>
+<span class="sd">            An embedding matrix of size n1*d, where n1 is the number of embeddings and d is the dimension.</span>
+<span class="sd">        embed2 : matrix_like</span>
+<span class="sd">            An embedding matrix of size n2*d, where n2 is the number of embeddings and d is the dimension.</span>
+<span class="sd">        top_k : list of integers</span>
+<span class="sd">            Hits@k metrics for evaluating results.</span>
+<span class="sd">        nums_threads : int</span>
+<span class="sd">            The number of threads used to search alignment.</span>
+<span class="sd">        metric : string</span>
+<span class="sd">            The distance metric to use. It can be &#39;cosine&#39;, &#39;euclidean&#39; or &#39;inner&#39;.</span>
+<span class="sd">        normalize : bool, true or false.</span>
+<span class="sd">            Whether to normalize the input embeddings.</span>
+<span class="sd">        csls_k : int</span>
+<span class="sd">            K value for csls. If k &gt; 0, enhance the similarity by csls.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        alignment_rest :  list</span>
+<span class="sd">            pairs of aligned entities</span>
+<span class="sd">        hits1 : float</span>
+<span class="sd">            hits@1 values for alignment results</span>
+<span class="sd">        mr : float</span>
+<span class="sd">            MR values for alignment results</span>
+<span class="sd">        mrr : float</span>
+<span class="sd">            MRR values for alignment results</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">sim_mat</span> <span class="o">=</span> <span class="n">sim</span><span class="p">(</span><span class="n">embed1</span><span class="p">,</span> <span class="n">embed2</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="n">metric</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="n">normalize</span><span class="p">,</span> <span class="n">csls_k</span><span class="o">=</span><span class="n">csls_k</span><span class="p">)</span>
+    <span class="n">num</span> <span class="o">=</span> <span class="n">sim_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">nums_threads</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">hits</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">top_k</span><span class="p">)</span>
+        <span class="n">mr</span><span class="p">,</span> <span class="n">mrr</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+        <span class="n">alignment_rest</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">rests</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="n">search_tasks</span> <span class="o">=</span> <span class="n">task_divide</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">num</span><span class="p">)),</span> <span class="n">nums_threads</span><span class="p">)</span>
+        <span class="n">pool</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Pool</span><span class="p">(</span><span class="n">processes</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">search_tasks</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">search_tasks</span><span class="p">:</span>
+            <span class="n">mat</span> <span class="o">=</span> <span class="n">sim_mat</span><span class="p">[</span><span class="n">task</span><span class="p">,</span> <span class="p">:]</span>
+            <span class="n">rests</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pool</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span><span class="n">calculate_rank</span><span class="p">,</span> <span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">mat</span><span class="p">,</span> <span class="n">top_k</span><span class="p">,</span> <span class="n">accurate</span><span class="p">,</span> <span class="n">num</span><span class="p">)))</span>
+        <span class="n">pool</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">pool</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">rest</span> <span class="ow">in</span> <span class="n">rests</span><span class="p">:</span>
+            <span class="n">sub_mr</span><span class="p">,</span> <span class="n">sub_mrr</span><span class="p">,</span> <span class="n">sub_hits</span><span class="p">,</span> <span class="n">sub_hits1_rest</span> <span class="o">=</span> <span class="n">rest</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+            <span class="n">mr</span> <span class="o">+=</span> <span class="n">sub_mr</span>
+            <span class="n">mrr</span> <span class="o">+=</span> <span class="n">sub_mrr</span>
+            <span class="n">hits</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sub_hits</span><span class="p">)</span>
+            <span class="n">alignment_rest</span> <span class="o">|=</span> <span class="n">sub_hits1_rest</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">mr</span><span class="p">,</span> <span class="n">mrr</span><span class="p">,</span> <span class="n">hits</span><span class="p">,</span> <span class="n">alignment_rest</span> <span class="o">=</span> <span class="n">calculate_rank</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">num</span><span class="p">)),</span> <span class="n">sim_mat</span><span class="p">,</span> <span class="n">top_k</span><span class="p">,</span> <span class="n">accurate</span><span class="p">,</span> <span class="n">num</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">alignment_rest</span><span class="p">)</span> <span class="o">==</span> <span class="n">num</span>
+    <span class="n">hits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">hits</span><span class="p">)</span> <span class="o">/</span> <span class="n">num</span> <span class="o">*</span> <span class="mi">100</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">hits</span><span class="p">)):</span>
+        <span class="n">hits</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">hits</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="n">cost</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">t</span>
+    <span class="k">if</span> <span class="n">accurate</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">csls_k</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;accurate results with csls: csls=</span><span class="si">{}</span><span class="s2">, hits@</span><span class="si">{}</span><span class="s2"> = </span><span class="si">{}</span><span class="s2">%, mr = </span><span class="si">{:.3f}</span><span class="s2">, mrr = </span><span class="si">{:.6f}</span><span class="s2">, time = </span><span class="si">{:.3f}</span><span class="s2"> s &quot;</span><span class="o">.</span>
+                  <span class="nb">format</span><span class="p">(</span><span class="n">csls_k</span><span class="p">,</span> <span class="n">top_k</span><span class="p">,</span> <span class="n">hits</span><span class="p">,</span> <span class="n">mr</span><span class="p">,</span> <span class="n">mrr</span><span class="p">,</span> <span class="n">cost</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;accurate results: hits@</span><span class="si">{}</span><span class="s2"> = </span><span class="si">{}</span><span class="s2">%, mr = </span><span class="si">{:.3f}</span><span class="s2">, mrr = </span><span class="si">{:.6f}</span><span class="s2">, time = </span><span class="si">{:.3f}</span><span class="s2"> s &quot;</span><span class="o">.</span>
+                  <span class="nb">format</span><span class="p">(</span><span class="n">top_k</span><span class="p">,</span> <span class="n">hits</span><span class="p">,</span> <span class="n">mr</span><span class="p">,</span> <span class="n">mrr</span><span class="p">,</span> <span class="n">cost</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">csls_k</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;quick results with csls: csls=</span><span class="si">{}</span><span class="s2">, hits@</span><span class="si">{}</span><span class="s2"> = </span><span class="si">{}</span><span class="s2">%, time = </span><span class="si">{:.3f}</span><span class="s2"> s &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">csls_k</span><span class="p">,</span> <span class="n">top_k</span><span class="p">,</span> <span class="n">hits</span><span class="p">,</span> <span class="n">cost</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;quick results: hits@</span><span class="si">{}</span><span class="s2"> = </span><span class="si">{}</span><span class="s2">%, time = </span><span class="si">{:.3f}</span><span class="s2"> s &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">top_k</span><span class="p">,</span> <span class="n">hits</span><span class="p">,</span> <span class="n">cost</span><span class="p">))</span>
+    <span class="n">hits1</span> <span class="o">=</span> <span class="n">hits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="c1">#del sim_mat</span>
+    <span class="n">gc</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">alignment_rest</span><span class="p">,</span> <span class="n">hits1</span><span class="p">,</span> <span class="n">mr</span><span class="p">,</span> <span class="n">mrr</span><span class="p">,</span> <span class="n">sim_mat</span></div>
+
+
+<span class="k">def</span> <span class="nf">find_alignment</span><span class="p">(</span><span class="n">sim_mat</span><span class="p">,</span> <span class="n">sim_th</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+    <span class="c1"># 找到大于th的行和列的索引对，放在set中</span>
+    <span class="n">potential_aligned_pairs</span> <span class="o">=</span> <span class="n">filter_sim_mat</span><span class="p">(</span><span class="n">sim_mat</span><span class="p">,</span> <span class="n">sim_th</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">potential_aligned_pairs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">check_new_alignment</span><span class="p">(</span><span class="n">potential_aligned_pairs</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="s2">&quot;after filtering by sim threshold&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">k</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">potential_aligned_pairs</span>
+    <span class="n">nearest_k_neighbors</span> <span class="o">=</span> <span class="n">search_nearest_k</span><span class="p">(</span><span class="n">sim_mat</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+    <span class="n">potential_aligned_pairs</span> <span class="o">&amp;=</span> <span class="n">nearest_k_neighbors</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">potential_aligned_pairs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">check_new_alignment</span><span class="p">(</span><span class="n">potential_aligned_pairs</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="s2">&quot;after filtering by sim and nearest k&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">potential_aligned_pairs</span>
+
+
+<span class="k">def</span> <span class="nf">search_nearest_k</span><span class="p">(</span><span class="n">sim_mat</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+    <span class="k">assert</span> <span class="n">k</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="n">neighbors</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">num</span> <span class="o">=</span> <span class="n">sim_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num</span><span class="p">):</span>
+        <span class="n">rank</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argpartition</span><span class="p">(</span><span class="o">-</span><span class="n">sim_mat</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:],</span> <span class="n">k</span><span class="p">)</span>
+        <span class="n">pairs</span> <span class="o">=</span> <span class="p">[</span><span class="n">j</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">([</span><span class="n">i</span><span class="p">],</span> <span class="n">rank</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">k</span><span class="p">])]</span>
+        <span class="n">neighbors</span> <span class="o">|=</span> <span class="nb">set</span><span class="p">(</span><span class="n">pairs</span><span class="p">)</span>
+        <span class="c1"># del rank</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">neighbors</span><span class="p">)</span> <span class="o">==</span> <span class="n">num</span> <span class="o">*</span> <span class="n">k</span>
+    <span class="k">return</span> <span class="n">neighbors</span>
+
+
+<span class="k">def</span> <span class="nf">check_new_alignment</span><span class="p">(</span><span class="n">aligned_pairs</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="s2">&quot;check alignment&quot;</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">aligned_pairs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">aligned_pairs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">, empty aligned pairs&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">context</span><span class="p">))</span>
+        <span class="k">return</span>
+    <span class="n">num</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">aligned_pairs</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">x</span> <span class="o">==</span> <span class="n">y</span><span class="p">:</span>
+            <span class="n">num</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">, right alignment: </span><span class="si">{}</span><span class="s2">/</span><span class="si">{}</span><span class="s2">=</span><span class="si">{:.3f}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">num</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">aligned_pairs</span><span class="p">),</span> <span class="n">num</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">aligned_pairs</span><span class="p">)))</span>
+
+
+<span class="k">def</span> <span class="nf">filter_sim_mat</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">greater</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">equal</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">greater</span> <span class="ow">and</span> <span class="n">equal</span><span class="p">:</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mat</span> <span class="o">&gt;=</span> <span class="n">threshold</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">greater</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">equal</span><span class="p">:</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mat</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="n">greater</span> <span class="ow">and</span> <span class="n">equal</span><span class="p">:</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mat</span> <span class="o">&lt;=</span> <span class="n">threshold</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mat</span> <span class="o">&lt;</span> <span class="n">threshold</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">set</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">calculate_rank</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">sim_mat</span><span class="p">,</span> <span class="n">top_k</span><span class="p">,</span> <span class="n">accurate</span><span class="p">,</span> <span class="n">total_num</span><span class="p">):</span>
+    <span class="k">assert</span> <span class="mi">1</span> <span class="ow">in</span> <span class="n">top_k</span>
+    <span class="n">mr</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">mrr</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">hits</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">top_k</span><span class="p">)</span>
+    <span class="n">hits1_rest</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">idx</span><span class="p">)):</span>
+        <span class="n">gold</span> <span class="o">=</span> <span class="n">idx</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">accurate</span><span class="p">:</span>
+            <span class="n">rank</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="n">sim_mat</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:])</span><span class="o">.</span><span class="n">argsort</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">rank</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argpartition</span><span class="p">(</span><span class="o">-</span><span class="n">sim_mat</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:],</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">top_k</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">hits1_rest</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="n">gold</span><span class="p">,</span> <span class="n">rank</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="k">assert</span> <span class="n">gold</span> <span class="ow">in</span> <span class="n">rank</span>
+        <span class="n">rank_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">rank</span> <span class="o">==</span> <span class="n">gold</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">mr</span> <span class="o">+=</span> <span class="p">(</span><span class="n">rank_index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">mrr</span> <span class="o">+=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">rank_index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">top_k</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">rank_index</span> <span class="o">&lt;</span> <span class="n">top_k</span><span class="p">[</span><span class="n">j</span><span class="p">]:</span>
+                <span class="n">hits</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="n">mr</span> <span class="o">/=</span> <span class="n">total_num</span>
+    <span class="n">mrr</span> <span class="o">/=</span> <span class="n">total_num</span>
+    <span class="k">return</span> <span class="n">mr</span><span class="p">,</span> <span class="n">mrr</span><span class="p">,</span> <span class="n">hits</span><span class="p">,</span> <span class="n">hits1_rest</span>
+
+
+<span class="k">def</span> <span class="nf">arg_sort</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">sim_mat</span><span class="p">,</span> <span class="n">prefix1</span><span class="p">,</span> <span class="n">prefix2</span><span class="p">):</span>
+    <span class="n">candidates</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">idx</span><span class="p">)):</span>
+        <span class="n">x_i</span> <span class="o">=</span> <span class="n">prefix1</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">idx</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="n">rank</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="n">sim_mat</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:])</span><span class="o">.</span><span class="n">argsort</span><span class="p">()</span>
+        <span class="n">y_j</span> <span class="o">=</span> <span class="p">[</span><span class="n">prefix2</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rank</span><span class="p">]</span>
+        <span class="n">candidates</span><span class="p">[</span><span class="n">x_i</span><span class="p">]</span> <span class="o">=</span> <span class="n">y_j</span>
+    <span class="k">return</span> <span class="n">candidates</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, luoxindi.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,4 +1,28 @@
 def get_loss_func_tf(phs, prs, pts, nhs, nrs, nts, args):
+    """Generate loss according to positive triples and negative triples for tensorflow.
+
+            Parameters
+            ----------
+            phs: torch.Tensor
+                Head tensor of positive triples.
+            prs: torch.Tensor
+                Relation tensor of positive triples.
+            pts: torch.Tensor
+                Tail tensor of positive triples.
+            nhs: torch.Tensor
+                Head tensor of negative triples.
+            nrs: torch.Tensor
+                Relation tensor of negative triples.
+            nts: torch.Tensor
+                Tail tensor of negative triples.
+            args: string
+                This parameter specifies three ways to generate losses, eg:margin-based, logistic and limited.
+
+            Returns
+            -------
+            loss: torch.Tensor
+                A tensor with gradients that need to be updated
+    """
     triple_loss = None
     if args.loss == 'margin-based':
         triple_loss = margin_loss_tf(phs, prs, pts, nhs, nrs, nts, args.margin, args.loss_norm)
@@ -7,73 +31,6 @@ def get_loss_func_tf(phs, prs, pts, nhs, nrs, nts, args):
     elif args.loss == 'limited':
         triple_loss = limited_loss_tf(phs, prs, pts, nhs, nrs, nts, args.pos_margin, args.neg_margin, args.loss_norm)
     return triple_loss
-
-
-def margin_loss_tfv2(pos_score, neg_score, margin, loss_norm):
-    import tensorflow as tf
-    loss = tf.reduce_sum(tf.nn.relu(margin + pos_score - neg_score))
-    return loss
-
-
-def logistic_loss_tfv2(pos_score, neg_score, loss_norm):
-    import tensorflow as tf
-    if loss_norm == 'L1':  # L1 score
-        pos_score = tf.reduce_sum(tf.abs(pos_score), axis=1)
-        neg_score = tf.reduce_sum(tf.abs(neg_score), axis=1)
-    else:  # L2 score
-        pos_score = tf.reduce_sum(tf.square(pos_score), axis=1)
-        neg_score = tf.reduce_sum(tf.square(neg_score), axis=1)
-    pos_loss = tf.reduce_sum(tf.math.log(1 + tf.exp(pos_score)))
-    neg_loss = tf.reduce_sum(tf.math.log(1 + tf.exp(-neg_score)))
-    loss = tf.add(pos_loss, neg_loss)
-    return loss
-
-
-def limited_loss_tfv2(pos_score, neg_score, pos_margin, neg_margin, loss_norm, balance=1.0):
-    import tensorflow as tf
-    if loss_norm == 'L1':  # L1 score
-        pos_score = tf.reduce_sum(tf.abs(pos_score), axis=1)
-        neg_score = tf.reduce_sum(tf.abs(neg_score), axis=1)
-    else:  # L2 score
-        pos_score = tf.reduce_sum(tf.square(pos_score), axis=1)
-        neg_score = tf.reduce_sum(tf.square(neg_score), axis=1)
-    pos_loss = tf.reduce_sum(tf.nn.relu(pos_score - tf.constant(pos_margin)))
-    neg_loss = tf.reduce_sum(tf.nn.relu(tf.constant(neg_margin) - neg_score))
-    loss = tf.add(pos_loss, balance * neg_loss, name='limited_loss')
-    return loss
-
-
-def get_loss_func_tfv2(pos_score, neg_score, args):
-    triple_loss = None
-    if args.loss == 'margin-based':
-        triple_loss = margin_loss_tfv2(pos_score, neg_score, args.margin, args.loss_norm)
-    elif args.loss == 'logistic':
-        triple_loss = logistic_loss_tfv2(pos_score, neg_score, args.loss_norm)
-    elif args.loss == 'limited':
-        triple_loss = limited_loss_tfv2(pos_score, neg_score, args.pos_margin, args.neg_margin, args.loss_norm)
-    return triple_loss
-
-
-def get_loss_func_torch(pos_score, neg_score, args):
-    triple_loss = None
-    if args.loss == 'margin-based':
-        triple_loss = margin_loss_torch(pos_score, neg_score, args.margin)
-    elif args.loss == 'logistic':
-        triple_loss = logistic_loss_torch(pos_score, neg_score)
-    elif args.loss == 'logistic_adv':
-        triple_loss = logistic_adv_loss_torch(pos_score, neg_score, args.adv)
-    elif args.loss == 'limited':
-        triple_loss = limited_loss_torch(pos_score, neg_score,  args.pos_margin, args.neg_margin)
-    return triple_loss
-
-
-def logistic_adv_loss_torch(pos_score, neg_score, adv):
-    import torch
-    import torch.nn.functional as F
-    import torch.nn as nn
-    cr = nn.LogSigmoid()
-    weights = F.softmax(-neg_score * adv, dim=-1).detach()
-    return -(torch.sum(cr(-pos_score)) + torch.sum(weights * cr(neg_score))) / 2
 
 
 def margin_loss_tf(phs, prs, pts, nhs, nrs, nts, margin, loss_norm):
@@ -99,7 +56,173 @@ def margin_loss_tf(phs, prs, pts, nhs, nrs, nts, margin, loss_norm):
     return loss
 
 
+def logistic_loss_tf(phs, prs, pts, nhs, nrs, nts, loss_norm):
+    import tensorflow._api.v2.compat.v1 as tf
+    tf.disable_eager_execution()  # 关闭eager运算
+    with tf.name_scope('logistic_loss_distance'):
+        pos_distance = phs + prs - pts
+        neg_distance = nhs + nrs - nts
+    with tf.name_scope('logistic_loss_score'):
+        if loss_norm == 'L1':  # L1 score
+            pos_score = tf.reduce_sum(tf.abs(pos_distance), axis=1)
+            neg_score = tf.reduce_sum(tf.abs(neg_distance), axis=1)
+        else:  # L2 score
+            pos_score = tf.reduce_sum(tf.square(pos_distance), axis=1)
+            neg_score = tf.reduce_sum(tf.square(neg_distance), axis=1)
+        pos_loss = tf.reduce_sum(tf.log(1 + tf.exp(pos_score)))
+        neg_loss = tf.reduce_sum(tf.log(1 + tf.exp(-neg_score)))
+        loss = tf.add(pos_loss, neg_loss, name='logistic_loss')
+    return loss
+
+
+def limited_loss_tf(phs, prs, pts, nhs, nrs, nts, pos_margin, neg_margin, loss_norm, balance=1.0):
+    import tensorflow._api.v2.compat.v1 as tf
+    tf.disable_eager_execution()  # 关闭eager运算
+    with tf.name_scope('limited_loss_distance'):
+        pos_distance = phs + prs - pts
+        neg_distance = nhs + nrs - nts
+    with tf.name_scope('limited_loss_score'):
+        if loss_norm == 'L1':  # L1 score
+            pos_score = tf.reduce_sum(tf.abs(pos_distance), axis=1)
+            neg_score = tf.reduce_sum(tf.abs(neg_distance), axis=1)
+        else:  # L2 score
+            pos_score = tf.reduce_sum(tf.square(pos_distance), axis=1)
+            neg_score = tf.reduce_sum(tf.square(neg_distance), axis=1)
+        pos_loss = tf.reduce_sum(tf.nn.relu(pos_score - tf.constant(pos_margin)))
+        neg_loss = tf.reduce_sum(tf.nn.relu(tf.constant(neg_margin) - neg_score))
+        loss = tf.add(pos_loss, balance * neg_loss, name='limited_loss')
+    return loss
+
+
+def get_loss_func_tfv2(pos_score, neg_score, args):
+    triple_loss = None
+    if args.loss == 'margin-based':
+        triple_loss = margin_loss_tfv2(pos_score, neg_score, args.margin)
+    elif args.loss == 'logistic':
+        triple_loss = logistic_loss_tfv2(pos_score, neg_score, 'L1')
+    elif args.loss == 'limited':
+        triple_loss = limited_loss_tfv2(pos_score, neg_score, args.pos_margin, args.neg_margin, 'L1')
+    return triple_loss
+
+
+def margin_loss_tfv2(pos_score, neg_score, margin):
+    import tensorflow as tf
+    loss = tf.reduce_sum(tf.nn.relu(margin + pos_score - neg_score))
+    return loss
+
+
+def logistic_loss_tfv2(pos_score, neg_score, loss_norm):
+    import tensorflow as tf
+    if loss_norm == 'L1':  # L1 score
+        pos_score = tf.reduce_sum(tf.abs(pos_score), axis=1)
+        neg_score = tf.reduce_sum(tf.abs(neg_score), axis=1)
+    else:  # L2 score
+        pos_score = tf.reduce_sum(tf.square(pos_score), axis=1)
+        neg_score = tf.reduce_sum(tf.square(neg_score), axis=1)
+    pos_loss = tf.reduce_sum(tf.math.log(1 + tf.exp(pos_score)))
+    neg_loss = tf.reduce_sum(tf.math.log(1 + tf.exp(-neg_score)))
+    loss = tf.add(pos_loss, neg_loss)
+    return loss
+
+def limited_loss_tfv2(pos_score, neg_score, pos_margin, neg_margin, loss_norm, balance=1.0):
+    import tensorflow as tf
+    if loss_norm == 'L1':  # L1 score
+        pos_score = tf.reduce_sum(tf.abs(pos_score), axis=1)
+        neg_score = tf.reduce_sum(tf.abs(neg_score), axis=1)
+    else:  # L2 score
+        pos_score = tf.reduce_sum(tf.square(pos_score), axis=1)
+        neg_score = tf.reduce_sum(tf.square(neg_score), axis=1)
+    pos_loss = tf.reduce_sum(tf.nn.relu(pos_score - tf.constant(pos_margin)))
+    neg_loss = tf.reduce_sum(tf.nn.relu(tf.constant(neg_margin) - neg_score))
+    loss = tf.add(pos_loss, balance * neg_loss, name='limited_loss')
+    return loss
+
+
+def get_loss_func_torch(pos_score, neg_score, args):
+    """Generate loss according to positive triples and negative triples for pytorch.
+
+                Parameters
+                ----------
+                phs: torch.Tensor
+                    Head tensor of positive triples.
+                prs: torch.Tensor
+                    Relation tensor of positive triples.
+                pts: torch.Tensor
+                    Tail tensor of positive triples.
+                nhs: torch.Tensor
+                    Head tensor of negative triples.
+                nrs: torch.Tensor
+                    Relation tensor of negative triples.
+                nts: torch.Tensor
+                    Tail tensor of negative triples.
+                args: string
+                    This parameter specifies four ways to generate losses, eg:margin-based, logistic, limited and logistic_adv.
+                Returns
+                -------
+                loss: torch.Tensor
+                    A tensor with gradients that need to be updated
+        """
+    triple_loss = None
+    if args.loss == 'margin-based':
+        triple_loss = margin_loss_torch(pos_score, neg_score, args.margin)
+    elif args.loss == 'logistic':
+        triple_loss = logistic_loss_torch(pos_score, neg_score)
+    elif args.loss == 'logistic_adv':
+        triple_loss = logistic_adv_loss_torch(pos_score, neg_score, args.adv)
+    elif args.loss == 'limited':
+        triple_loss = limited_loss_torch(pos_score, neg_score,  args.pos_margin, args.neg_margin)
+    return triple_loss
+
+
+def logistic_adv_loss_torch(pos_score, neg_score, adv):
+    """
+    Parameters
+    ----------
+    pos_score: torch.Tensor
+        Scores of the true triplets as returned by the `forward` methods
+        of the models.
+    neg_score: torch.Tensor
+        Scores of the negative triplets as returned by the `forward`
+        methods of the models.
+    adv: int
+        Initialized by users.
+
+    Returns
+    -------
+    loss: torch.Tensor
+        Loss of the form log(1 + exp(eta * weights * f(h,r,t))
+        where f(h,r,t) is the score of the fact and eta
+        is either 1 or -1 if the fact is true or false. weights represents the importance of neg_score.
+    """
+    import torch
+    import torch.nn.functional as F
+    import torch.nn as nn
+    cr = nn.LogSigmoid()
+    weights = F.softmax(-neg_score * adv, dim=-1).detach()
+    return -(torch.sum(cr(-pos_score)) + torch.sum(weights * cr(neg_score))) / 2
+
+
 def margin_loss_torch(pos_score, neg_score, margin):
+    """
+    Parameters
+    ----------
+    pos_score: torch.Tensor
+        Scores of the true triplets as returned by the `forward` methods of
+        the models.
+    neg_score: torch.Tensor
+        Scores of the negative triplets as returned by the `forward`
+        methods of the models.
+    margin: torch.Tensor
+        This value is initialized by users.
+
+    Returns
+    -------
+    loss: torch.Tensor
+        Loss of the form
+        max{0, margin - f(h,r,t) + f(h',r',t')} where
+        f(h,r,t) is the score of a true fact and
+        f(h',r',t') is the score of the associated negative fact.
+    """
     import torch
     loss = torch.sum(torch.relu_(margin + pos_score - neg_score))
     return loss
@@ -125,26 +248,31 @@ def positive_loss_torch(pos_score):
     return loss
 
 
-def limited_loss_tf(phs, prs, pts, nhs, nrs, nts, pos_margin, neg_margin, loss_norm, balance=1.0):
-    import tensorflow._api.v2.compat.v1 as tf
-    tf.disable_eager_execution()  # 关闭eager运算
-    with tf.name_scope('limited_loss_distance'):
-        pos_distance = phs + prs - pts
-        neg_distance = nhs + nrs - nts
-    with tf.name_scope('limited_loss_score'):
-        if loss_norm == 'L1':  # L1 score
-            pos_score = tf.reduce_sum(tf.abs(pos_distance), axis=1)
-            neg_score = tf.reduce_sum(tf.abs(neg_distance), axis=1)
-        else:  # L2 score
-            pos_score = tf.reduce_sum(tf.square(pos_distance), axis=1)
-            neg_score = tf.reduce_sum(tf.square(neg_distance), axis=1)
-        pos_loss = tf.reduce_sum(tf.nn.relu(pos_score - tf.constant(pos_margin)))
-        neg_loss = tf.reduce_sum(tf.nn.relu(tf.constant(neg_margin) - neg_score))
-        loss = tf.add(pos_loss, balance * neg_loss, name='limited_loss')
-    return loss
-
-
 def limited_loss_torch(pos_score, neg_score, pos_margin, neg_margin, balance=1.0):
+    """
+        Parameters
+        ----------
+        pos_score: torch.Tensor
+            Scores of the true triplets as returned by the `forward` methods of
+            the models.
+        neg_score: torch.Tensor
+            Scores of the negative triplets as returned by the `forward`
+            methods of the models.
+        pos_margin: torch.Tensor
+            This value is initialized by users.
+        neg_margin: torch.Tensor
+            This value is initialized by users.
+        balance: float, optional
+            This value balances the neg_score and pos_score. Default value is 1.0.
+
+        Returns
+        -------
+        loss: torch.Tensor
+            Loss of the form
+            max{0, f(h,r,t) - pos_margin} + max{0, neg_margin - f(h',r',t')} where
+            f(h,r,t) is the score of a true fact and
+            f(h',r',t') is the score of the associated negative fact.
+    """
     import torch
     pos_loss = torch.sum(torch.relu(pos_score - pos_margin))
     neg_loss = torch.sum(torch.relu(neg_margin - neg_score))
@@ -152,26 +280,24 @@ def limited_loss_torch(pos_score, neg_score, pos_margin, neg_margin, balance=1.0
     return loss
 
 
-def logistic_loss_tf(phs, prs, pts, nhs, nrs, nts, loss_norm):
-    import tensorflow._api.v2.compat.v1 as tf
-    tf.disable_eager_execution()  # 关闭eager运算
-    with tf.name_scope('logistic_loss_distance'):
-        pos_distance = phs + prs - pts
-        neg_distance = nhs + nrs - nts
-    with tf.name_scope('logistic_loss_score'):
-        if loss_norm == 'L1':  # L1 score
-            pos_score = tf.reduce_sum(tf.abs(pos_distance), axis=1)
-            neg_score = tf.reduce_sum(tf.abs(neg_distance), axis=1)
-        else:  # L2 score
-            pos_score = tf.reduce_sum(tf.square(pos_distance), axis=1)
-            neg_score = tf.reduce_sum(tf.square(neg_distance), axis=1)
-        pos_loss = tf.reduce_sum(tf.log(1 + tf.exp(pos_score)))
-        neg_loss = tf.reduce_sum(tf.log(1 + tf.exp(-neg_score)))
-        loss = tf.add(pos_loss, neg_loss, name='logistic_loss')
-    return loss
-
-
 def logistic_loss_torch(pos_score, neg_score):
+    """
+    Parameters
+    ----------
+    pos_score: torch.Tensor
+        Scores of the true triplets as returned by the `forward` methods
+        of the models.
+    neg_score: torch.Tensor
+        Scores of the negative triplets as returned by the `forward`
+        methods of the models.
+
+    Returns
+    -------
+    loss: torch.Tensor
+        Loss of the form log(1+ exp(eta * f(h,r,t))`
+        where f(h,r,t) is the score of the fact and eta
+        is either 1 or -1 if the fact is true or false.
+    """
     import torch
     pos_loss = torch.sum(torch.log(1 + torch.exp(pos_score)))
     neg_loss = torch.sum(torch.log(1 + torch.exp(-neg_score)))

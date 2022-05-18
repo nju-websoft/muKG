@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.py.load.kg &mdash; muKG . documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html" class="icon icon-home"> muKG
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../tutorials/run.html">Training tutorials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/base.html">base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/evaluation.html">evaluation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/load.html">load</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/model.html">model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/util.html">util</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">muKG</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+      <li>src.py.load.kg</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for src.py.load.kg</h1><div class="highlight"><pre>
+<span></span><span class="k">def</span> <span class="nf">parse_triples</span><span class="p">(</span><span class="n">relation_set</span><span class="p">):</span>
+    <span class="n">subjects</span><span class="p">,</span> <span class="n">predicates</span><span class="p">,</span> <span class="n">objects</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(),</span> <span class="nb">set</span><span class="p">(),</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">o</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">relation_set</span><span class="p">:</span>
+        <span class="n">subjects</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="n">predicates</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="n">objects</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">objects</span><span class="p">,</span> <span class="n">predicates</span><span class="p">,</span> <span class="n">subjects</span>
+
+
+<span class="k">def</span> <span class="nf">parse_types_list</span><span class="p">(</span><span class="n">relation_set</span><span class="p">):</span>
+    <span class="n">subjects</span><span class="p">,</span> <span class="n">types</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(),</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">relation_set</span><span class="p">:</span>
+        <span class="n">subjects</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="n">types</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">subjects</span><span class="p">,</span> <span class="n">types</span>
+
+
+<span class="k">def</span> <span class="nf">parse_types</span><span class="p">(</span><span class="n">relation_set</span><span class="p">):</span>
+    <span class="n">subjects</span><span class="p">,</span> <span class="n">types</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(),</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">relation_set</span><span class="p">:</span>
+        <span class="n">subjects</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="n">types</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">subjects</span><span class="p">,</span> <span class="n">types</span>
+
+<span class="c1"># 将一个三元组转为id，存储一个kg所需的各种数据</span>
+<div class="viewcode-block" id="KG"><a class="viewcode-back" href="../../../../contents/load.html#src.py.load.kg.KG">[docs]</a><span class="k">class</span> <span class="nc">KG</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Store the completed information of single KG.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        entities_id_dict: dict</span>
+<span class="sd">             Dictionary mapping entity labels to their integer key. This is computed if not passed as argument.</span>
+<span class="sd">        relations_id_dict: dict</span>
+<span class="sd">            Dictionary mapping relation labels to their integer key. This is computed if not passed as argument.</span>
+<span class="sd">        attributes_id_dict: dict</span>
+<span class="sd">            Dictionary mapping attribute labels to their integer key. This is computed if not passed as argument.</span>
+<span class="sd">        type_dict: dict, optional</span>
+<span class="sd">            Dictionary of possible entities so that the pair (entity, tpye) gives a true fact. The keys are entity.</span>
+<span class="sd">            This is computed if not passed as argument.</span>
+<span class="sd">        r_dict: dict</span>
+<span class="sd">            Dictionary of possible relations r so that the triple (h,r,t) gives a true fact. The keys are tuples (h, t).</span>
+<span class="sd">            This is computed if not passed as argument.</span>
+<span class="sd">        t_dict: dict</span>
+<span class="sd">            Dictionary of possible entities t so that the triple (h,r,t) gives a true fact. The keys are tuples (h, t).</span>
+<span class="sd">            This is computed if not passed as argument.</span>
+<span class="sd">        h_dict: dict</span>
+<span class="sd">            Dictionary of possible entities h so that the triple (h,r,t) gives a true fact. The keys are tuples (r, t).</span>
+<span class="sd">            This is computed if not passed as argument.</span>
+<span class="sd">        relation_triples_list: list</span>
+<span class="sd">            List of all the train triples tuples (h, r, t). They are loaded from dataset selected by users.</span>
+<span class="sd">        test_relation_triples_list: list</span>
+<span class="sd">            List of all the test triples tuples (h, r, t). They are loaded from dataset selected by users.</span>
+<span class="sd">        valid_relation_triples_list: list</span>
+<span class="sd">            List of all the valid triples tuples (h, r, t). They are loaded from dataset selected by users.</span>
+<span class="sd">        train_et_list: list</span>
+<span class="sd">            List of all the train triples tuples (entity, type). They are loaded from entity typing dataset selected by users.</span>
+<span class="sd">        valid_et_list: list</span>
+<span class="sd">            List of all the valid triples tuples (entity, type). They are loaded from entity typing dataset selected by users.</span>
+<span class="sd">        test_et_list: list</span>
+<span class="sd">            List of all the test triples tuples (entity, type). They are loaded from entity typing dataset selected by users.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">relation_triples</span><span class="p">,</span> <span class="n">attribute_triples</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type_dict</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r_dict</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">h_dict</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">t_dict</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ht_dict</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_relation_triples_list</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_relation_triples_set</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">valid_relation_triples_list</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">valid_relation_triples_set</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">entities_set</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">entities_list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relations_set</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">relations_list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attributes_set</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">attributes_list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type_set</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">type_list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">entities_num</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">relations_num</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">attributes_num</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">type_num</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relation_triples_num</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">attribute_triples_num</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">local_relation_triples_num</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_attribute_triples_num</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">valid_et_ent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid_et_type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_et_ent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_et_type</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">entities_id_dict</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relations_id_dict</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attributes_id_dict</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train_et_list</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid_et_list</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_et_list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rt_dict</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">hr_dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">entity_relations_dict</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">entity_attributes_dict</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">av_dict</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">sup_relation_triples_set</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sup_relation_triples_list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sup_attribute_triples_set</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sup_attribute_triples_list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">relation_triples_set</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attribute_triples_set</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relation_triples_list</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attribute_triples_list</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">local_relation_triples_set</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">local_relation_triples_list</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">local_attribute_triples_set</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">local_attribute_triples_list</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_relations</span><span class="p">(</span><span class="n">relation_triples</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_attributes</span><span class="p">(</span><span class="n">attribute_triples</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;KG statistics:&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Number of entities:&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">entities_num</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Number of relations:&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">relations_num</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Number of attributes:&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">attributes_num</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Number of relation triples:&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">relation_triples_num</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Number of attribute triples:&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">attribute_triples_num</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Number of local relation triples:&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_relation_triples_num</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Number of local attribute triples:&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_attribute_triples_num</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">()</span>
+
+<div class="viewcode-block" id="KG.set_relations"><a class="viewcode-back" href="../../../../contents/load.html#src.py.load.kg.KG.set_relations">[docs]</a>    <span class="k">def</span> <span class="nf">set_relations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">relation_triples</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set relation triples (h, r, t).</span>
+
+<span class="sd">            Parameters</span>
+<span class="sd">            ----------</span>
+<span class="sd">            relation_triples: list</span>
+<span class="sd">                List of all the training triples (h, r, t)</span>
+
+<span class="sd">            Returns</span>
+<span class="sd">            -------</span>
+<span class="sd">            entities_num: int</span>
+<span class="sd">                The total numbers of entities in the dataset.</span>
+<span class="sd">            relations_num: int</span>
+<span class="sd">                The total numbers of relations in the dataset.</span>
+<span class="sd">            relation_triples_num: int</span>
+<span class="sd">                The total numbers of training triples in the dataset.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relation_triples_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">relation_triples</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relation_triples_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relation_triples_set</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">local_relation_triples_set</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">relation_triples_set</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">local_relation_triples_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">relation_triples_list</span>
+
+        <span class="n">heads</span><span class="p">,</span> <span class="n">relations</span><span class="p">,</span> <span class="n">tails</span> <span class="o">=</span> <span class="n">parse_triples</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relation_triples_set</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">entities_set</span> <span class="o">=</span> <span class="n">heads</span> <span class="o">|</span> <span class="n">tails</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relations_set</span> <span class="o">=</span> <span class="n">relations</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">entities_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entities_set</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relations_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relations_set</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">entities_num</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entities_set</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relations_num</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relations_set</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relation_triples_num</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relation_triples_set</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">local_relation_triples_num</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">local_relation_triples_set</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">generate_relation_triple_dict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parse_relations</span><span class="p">()</span></div>
+        
+<div class="viewcode-block" id="KG.set_valid_relations"><a class="viewcode-back" href="../../../../contents/load.html#src.py.load.kg.KG.set_valid_relations">[docs]</a>    <span class="k">def</span> <span class="nf">set_valid_relations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">valid_relations</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set relation triples (h, r, t).</span>
+<span class="sd">            Parameters</span>
+<span class="sd">            ----------</span>
+<span class="sd">            valid_relations: list</span>
+<span class="sd">                List of all the valid triples (h, r, t)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">valid_relation_triples_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">valid_relations</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">valid_relation_triples_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">valid_relation_triples_set</span><span class="p">)</span>
+        <span class="n">heads</span><span class="p">,</span> <span class="n">relations</span><span class="p">,</span> <span class="n">tails</span> <span class="o">=</span> <span class="n">parse_triples</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">valid_relation_triples_set</span><span class="p">)</span>
+        <span class="n">enset</span> <span class="o">=</span> <span class="n">heads</span> <span class="o">|</span> <span class="n">tails</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">entities_set</span> <span class="o">|=</span> <span class="n">enset</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relations_set</span> <span class="o">|=</span> <span class="n">relations</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">entities_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entities_set</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relations_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relations_set</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">entities_num</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entities_set</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relations_num</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relations_set</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="KG.set_test_relations"><a class="viewcode-back" href="../../../../contents/load.html#src.py.load.kg.KG.set_test_relations">[docs]</a>    <span class="k">def</span> <span class="nf">set_test_relations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test_relations</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set relation triples (h, r, t).</span>
+<span class="sd">            Parameters</span>
+<span class="sd">            ----------</span>
+<span class="sd">            test_relations: list</span>
+<span class="sd">                List of all the test triples (h, r, t)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_relation_triples_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">test_relations</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_relation_triples_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test_relation_triples_set</span><span class="p">)</span>
+        <span class="n">heads</span><span class="p">,</span> <span class="n">relations</span><span class="p">,</span> <span class="n">tails</span> <span class="o">=</span> <span class="n">parse_triples</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test_relation_triples_set</span><span class="p">)</span>
+        <span class="n">enset</span> <span class="o">=</span> <span class="n">heads</span> <span class="o">|</span> <span class="n">tails</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">entities_set</span> <span class="o">|=</span> <span class="n">enset</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relations_set</span> <span class="o">|=</span> <span class="n">relations</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">entities_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entities_set</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relations_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relations_set</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">entities_num</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entities_set</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relations_num</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relations_set</span><span class="p">)</span></div>
+        
+<div class="viewcode-block" id="KG.set_attributes"><a class="viewcode-back" href="../../../../contents/load.html#src.py.load.kg.KG.set_attributes">[docs]</a>    <span class="k">def</span> <span class="nf">set_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute_triples</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set attribute triples (e, a, v).</span>
+<span class="sd">            Parameters</span>
+<span class="sd">            ----------</span>
+<span class="sd">            attribute_triples: list</span>
+<span class="sd">                List of all the attribute triples (e, a, v).</span>
+
+<span class="sd">            Returns</span>
+<span class="sd">            -------</span>
+<span class="sd">            attributes_list: list</span>
+<span class="sd">            List of all the attribute.</span>
+<span class="sd">            attributes_num: int</span>
+<span class="sd">            The total number of attribute.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attribute_triples_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">attribute_triples</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attribute_triples_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attribute_triples_set</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">local_attribute_triples_set</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attribute_triples_set</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">local_attribute_triples_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attribute_triples_list</span>
+
+        <span class="n">entities</span><span class="p">,</span> <span class="n">attributes</span><span class="p">,</span> <span class="n">values</span> <span class="o">=</span> <span class="n">parse_triples</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attribute_triples_set</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attributes_set</span> <span class="o">=</span> <span class="n">attributes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attributes_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attributes_set</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attributes_num</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attributes_set</span><span class="p">)</span>
+
+        <span class="c1"># add the new entities from attribute triples</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">entities_set</span> <span class="o">|=</span> <span class="n">entities</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">entities_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entities_set</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">entities_num</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entities_set</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">attribute_triples_num</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attribute_triples_set</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">local_attribute_triples_num</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">local_attribute_triples_set</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">generate_attribute_triple_dict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parse_attributes</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="KG.generate_attribute_triple_dict"><a class="viewcode-back" href="../../../../contents/load.html#src.py.load.kg.KG.generate_attribute_triple_dict">[docs]</a>    <span class="k">def</span> <span class="nf">generate_attribute_triple_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Generate attribute triples dict according to the attribute triples.</span>
+
+<span class="sd">            Returns</span>
+<span class="sd">            -------</span>
+<span class="sd">            av_dict: dict</span>
+<span class="sd">            Dictionary of possible entities e so that the triple (e, a, v) gives a true fact. The keys are tuples (a, v).</span>
+<span class="sd">            This is computed if not passed as argument.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">av_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">h</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_attribute_triples_list</span><span class="p">:</span>
+            <span class="n">av_set</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">av_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span>
+            <span class="n">av_set</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="n">a</span><span class="p">,</span> <span class="n">v</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">av_dict</span><span class="p">[</span><span class="n">h</span><span class="p">]</span> <span class="o">=</span> <span class="n">av_set</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Number of av_dict:&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">av_dict</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="KG.generate_relation_triple_dict"><a class="viewcode-back" href="../../../../contents/load.html#src.py.load.kg.KG.generate_relation_triple_dict">[docs]</a>    <span class="k">def</span> <span class="nf">generate_relation_triple_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Generate relation triples dict according to the relation triples.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rt_dict</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">hr_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(),</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r_dict</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">h_dict</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(),</span> <span class="nb">dict</span><span class="p">(),</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">h</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_relation_triples_list</span><span class="p">:</span>
+            <span class="n">rt_set</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rt_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span>
+            <span class="n">rt_set</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="n">r</span><span class="p">,</span> <span class="n">t</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rt_dict</span><span class="p">[</span><span class="n">h</span><span class="p">]</span> <span class="o">=</span> <span class="n">rt_set</span>
+            <span class="n">hr_set</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hr_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span>
+            <span class="n">hr_set</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="n">h</span><span class="p">,</span> <span class="n">r</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hr_dict</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">hr_set</span>
+
+            <span class="n">r_set</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">r_dict</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">h</span><span class="p">,</span> <span class="n">t</span><span class="p">),</span> <span class="nb">set</span><span class="p">())</span>
+            <span class="n">r_set</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">r_dict</span><span class="p">[(</span><span class="n">h</span><span class="p">,</span> <span class="n">t</span><span class="p">)]</span> <span class="o">=</span> <span class="n">r_set</span>
+
+            <span class="n">h_set</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">h_dict</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">r</span><span class="p">,</span> <span class="n">t</span><span class="p">),</span> <span class="nb">set</span><span class="p">())</span>
+            <span class="n">h_set</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">h_dict</span><span class="p">[(</span><span class="n">r</span><span class="p">,</span> <span class="n">t</span><span class="p">)]</span> <span class="o">=</span> <span class="n">h_set</span>
+
+            <span class="n">t_set</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_dict</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">h</span><span class="p">,</span> <span class="n">r</span><span class="p">),</span> <span class="nb">set</span><span class="p">())</span>
+            <span class="n">t_set</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">t_dict</span><span class="p">[(</span><span class="n">h</span><span class="p">,</span> <span class="n">r</span><span class="p">)]</span> <span class="o">=</span> <span class="n">t_set</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Number of rt_dict:&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rt_dict</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Number of hr_dict:&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hr_dict</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Number of h_dict:&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">h_dict</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Number of r_dict:&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">r_dict</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Number of t_dict:&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">t_dict</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="KG.parse_relations"><a class="viewcode-back" href="../../../../contents/load.html#src.py.load.kg.KG.parse_relations">[docs]</a>    <span class="k">def</span> <span class="nf">parse_relations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Mapping entity labels to their relations.</span>
+
+<span class="sd">            Returns</span>
+<span class="sd">            -------</span>
+<span class="sd">            entity_relations_dict: dict</span>
+<span class="sd">                Dictionary mapping entity labels to their relations key.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">entity_relations_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">ent</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_relation_triples_set</span><span class="p">:</span>
+            <span class="n">attrs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">entity_relations_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ent</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span>
+            <span class="n">attrs</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">attr</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">entity_relations_dict</span><span class="p">[</span><span class="n">ent</span><span class="p">]</span> <span class="o">=</span> <span class="n">attrs</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;entity relations dict:&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entity_relations_dict</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="KG.parse_attributes"><a class="viewcode-back" href="../../../../contents/load.html#src.py.load.kg.KG.parse_attributes">[docs]</a>    <span class="k">def</span> <span class="nf">parse_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Mapping entity labels to their attributes.</span>
+
+<span class="sd">            Returns</span>
+<span class="sd">            -------</span>
+<span class="sd">            entity_attributes_dict: dict</span>
+<span class="sd">                Dictionary mapping entity labels to their attributes key.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">entity_attributes_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">ent</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_attribute_triples_set</span><span class="p">:</span>
+            <span class="n">attrs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">entity_attributes_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ent</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span>
+            <span class="n">attrs</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">attr</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">entity_attributes_dict</span><span class="p">[</span><span class="n">ent</span><span class="p">]</span> <span class="o">=</span> <span class="n">attrs</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;entity attributes dict:&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entity_attributes_dict</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="KG.set_type_list"><a class="viewcode-back" href="../../../../contents/load.html#src.py.load.kg.KG.set_type_list">[docs]</a>    <span class="k">def</span> <span class="nf">set_type_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">train_type_id_dict</span><span class="p">,</span> <span class="n">valid_type_id_dict</span><span class="p">,</span> <span class="n">test_type_id_dict</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set entity and type pairs (entity, type).</span>
+<span class="sd">            Parameters</span>
+<span class="sd">            ----------</span>
+<span class="sd">            train_et_list: list</span>
+<span class="sd">                List of all the train pairs tuples (entity, type). They are loaded from dataset selected by users.</span>
+<span class="sd">            valid_et_list: list</span>
+<span class="sd">                List of all the valid pairs tuples (entity, type). They are loaded from dataset selected by users.</span>
+<span class="sd">            test_et_list: list</span>
+<span class="sd">                List of all the test pairs tuples (entity, type). They are loaded from dataset selected by users.</span>
+<span class="sd">            type_dict: dict</span>
+<span class="sd">                Dictionary of possible entities e so that the pair (e, type) gives a true fact. The keys are e.</span>
+<span class="sd">            This is computed if not passed as argument.</span>
+
+<span class="sd">            Returns</span>
+<span class="sd">            -------</span>
+<span class="sd">            attributes_list: list</span>
+<span class="sd">            List of all the attribute.</span>
+<span class="sd">            attributes_num: int</span>
+<span class="sd">            The total number of attribute.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train_et_list</span> <span class="o">=</span> <span class="n">train_type_id_dict</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">valid_et_list</span> <span class="o">=</span> <span class="n">valid_type_id_dict</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_et_list</span> <span class="o">=</span> <span class="n">test_type_id_dict</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;entity type dict:&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">train_et_list</span><span class="p">))</span>
+        <span class="n">_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">type_set</span> <span class="o">=</span> <span class="n">parse_types</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">train_et_list</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type_set</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type_num</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type_list</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;entity type num:&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">type_num</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">valid_et_ent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid_et_type</span> <span class="o">=</span> <span class="n">parse_types_list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">valid_et_list</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_et_ent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_et_type</span> <span class="o">=</span> <span class="n">parse_types_list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test_et_list</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">h</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_et_list</span><span class="p">:</span>
+            <span class="n">type_set</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">type_dict</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">h</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="nb">set</span><span class="p">())</span>
+            <span class="n">type_set</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">type_dict</span><span class="p">[(</span><span class="n">h</span><span class="p">,</span> <span class="mi">0</span><span class="p">)]</span> <span class="o">=</span> <span class="n">type_set</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Number of type_dict:&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type_dict</span><span class="p">))</span></div>
+
+    <span class="k">def</span> <span class="nf">set_id_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entities_id_dict</span><span class="p">,</span> <span class="n">relations_id_dict</span><span class="p">,</span> <span class="n">attributes_id_dict</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">entities_id_dict</span> <span class="o">=</span> <span class="n">entities_id_dict</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relations_id_dict</span> <span class="o">=</span> <span class="n">relations_id_dict</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attributes_id_dict</span> <span class="o">=</span> <span class="n">attributes_id_dict</span>
+
+    <span class="k">def</span> <span class="nf">add_sup_relation_triples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sup_triples</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sup_relation_triples_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">sup_triples</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sup_relation_triples_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sup_relation_triples_set</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relation_triples_set</span> <span class="o">|=</span> <span class="n">sup_triples</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relation_triples_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relation_triples_set</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relation_triples_num</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relation_triples_list</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">add_sup_attribute_triples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sup_triples</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sup_attribute_triples_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">sup_triples</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sup_attribute_triples_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sup_attribute_triples_set</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attribute_triples_set</span> <span class="o">|=</span> <span class="n">sup_triples</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attribute_triples_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attribute_triples_set</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attribute_triples_num</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attribute_triples_list</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, luoxindi.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

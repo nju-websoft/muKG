@@ -18,16 +18,16 @@ class TransH(BasicModel):
         self.dim = self.args.dim
         self.margin = self.args.margin
         # self.epsilon = epsilon
-        self.p_norm = self.args.loss_norm
+        self.p_norm = 1
 
         self.ent_embeddings = init_embeddings([self.ent_tot, self.dim], 'ent_embeddings',
-                                              self.args.init, self.args.ent_l2_norm, dtype=tf.double)
+                                              'xavier', False, dtype=tf.double)
         # 初始化关系翻译向量空间
         self.rel_embeddings = init_embeddings([self.rel_tot, self.dim], 'rel_embeddings',
-                                              self.args.init, self.args.rel_l2_norm, dtype=tf.double)
+                                              'xavier', False, dtype=tf.double)
 
         self.norm_vector = init_embeddings([self.rel_tot, self.dim], 'norm_vector',
-                                              self.args.init, self.args.rel_l2_norm, dtype=tf.double)
+                                              'xavier', False, dtype=tf.double)
         self.projected = False
         self.projected_entities = np.zeros(shape=(self.rel_tot, self.ent_tot, self.dim))
 
@@ -98,16 +98,16 @@ class TransH(BasicModel):
         h = self.transfer(h, r_norm)
         t = self.transfer(t, r_norm)
         score = tf.reshape(self.calc(h, r, t), [-1])
-        self.batch_size = int(len(batch_h) / (self.args.neg_triple_num + 1))
-        po_score = self.get_pos_score(score)
-        ne_score = self.get_neg_score(score)
-        score = get_loss_func_tfv2(po_score, ne_score, self.args)
+        #self.batch_size = int(len(batch_h) / (self.args.neg_triple_num + 1))
+        #po_score = self.get_pos_score(score)
+        #ne_score = self.get_neg_score(score)
+        #score = get_loss_func_tfv2(po_score, ne_score, self.args)
         # score = tf.math.reduce_sum(tf.math.maximum(po_score - ne_score + self.margin, 0))
         return score
 
     def save(self):
-        ent_embeds = self.ent_embeddings.cpu().weight.data
-        rel_embeds = self.rel_embeddings.cpu().weight.data
+        ent_embeds = self.ent_embeddings.numpy()
+        rel_embeds = self.rel_embeddings.numpy()
         read.save_embeddings(self.out_folder, self.kgs, ent_embeds, rel_embeds, None, mapping_mat=None)
-        norm_vector = self.norm_vector.cpu().weight.data
+        norm_vector = self.norm_vector.numpy()
         read.save_special_embeddings(self.out_folder, 'norm_vector', '', norm_vector, None)

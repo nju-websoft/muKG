@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>model &mdash; muKG . documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="util" href="util.html" />
+    <link rel="prev" title="load" href="load.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> muKG
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/run.html">Training tutorials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="base.html">base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="evaluation.html">evaluation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="load.html">load</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="util.html">util</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">muKG</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>model</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/contents/model.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-src.py.model.general_models">
+<span id="model"></span><h1>model<a class="headerlink" href="#module-src.py.model.general_models" title="Permalink to this headline"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="src.py.model.general_models.ea_models">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.py.model.general_models.</span></span><span class="sig-name descname"><span class="pre">ea_models</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kgs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/model/general_models.html#ea_models"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.model.general_models.ea_models" title="Permalink to this definition"></a></dt>
+<dd><p>This class provides a unified interface for the entity alignment models with pytorch and tf2.
+You can select your model name and then use model.run(), model.test() and model.save() to simply support your
+work. Models are continuously updated.</p>
+<p>PyTorch: Currently supports MTransE, AttrE, SEA, GCN-Align, RDGCN, IPTransE, JAPE, BootEA and IMUSE.</p>
+<p>Tensorflow: Currently supports MTransE, AttrE, SEA, GCN-Align, RDGCN, IPTransE, JAPE, BootEA, RSN and IMUSE.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>args</strong> (<em>dict</em>) – A python dict from muKG.src.py.args. It stored detailed information about model
+training and testing.</p></li>
+<li><p><strong>kgs</strong> (<em>muKG.src.py.KGs</em>) – Store the whole information of two KGs, like uri_kg1, uri_kg2, uri_train_links, uri_test_links and so on.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="src.py.model.general_models.ea_models.get_model">
+<span class="sig-name descname"><span class="pre">get_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/model/general_models.html#ea_models.get_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.model.general_models.ea_models.get_model" title="Permalink to this definition"></a></dt>
+<dd><p>Select the specific model according to the model name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>model_name</strong> (<em>str</em>) – The correct name of the selected model. If the model has not been implemented, it will raise an
+exception.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.py.model.general_models.ea_models.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/model/general_models.html#ea_models.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.model.general_models.ea_models.run" title="Permalink to this definition"></a></dt>
+<dd><p>Train the selected model by calling kge_trainer.run().</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.py.model.general_models.ea_models.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/model/general_models.html#ea_models.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.model.general_models.ea_models.save" title="Permalink to this definition"></a></dt>
+<dd><p>Save the selected model’s entity embeddings under the specific folder.
+Default folder is output/results/model_name/dataset_name/torch(tf)/embedding.npy.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.py.model.general_models.ea_models.test">
+<span class="sig-name descname"><span class="pre">test</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/model/general_models.html#ea_models.test"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.model.general_models.ea_models.test" title="Permalink to this definition"></a></dt>
+<dd><p>Test the selected model with the saved entity embeddings of two KGs.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="src.py.model.general_models.et_models">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.py.model.general_models.</span></span><span class="sig-name descname"><span class="pre">et_models</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kgs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/model/general_models.html#et_models"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.model.general_models.et_models" title="Permalink to this definition"></a></dt>
+<dd><p>This class provides a unified interface for the entity typing models with pytorch and tf2.
+You can select your model name and then use model.run(), model.test() and model.save() to simply support your
+work. Models are continuously updated.</p>
+<p>PyTorch: Currently supports TransE_ET, HolE_ET and RESCAL_ET.</p>
+<p>Tensorflow: Currently supports TransE_ET.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>args</strong> (<em>dict</em>) – A python dict from muKG.src.py.args. It stored detailed information about model
+training and testing.</p></li>
+<li><p><strong>kg</strong> (<em>muKG.src.py.KG</em>) – Store the whole information of a KG, like h_dict, r_dict, t_dict,
+train_dataset, valid_dataset, test_dataset and so on.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="src.py.model.general_models.et_models.get_model">
+<span class="sig-name descname"><span class="pre">get_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/model/general_models.html#et_models.get_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.model.general_models.et_models.get_model" title="Permalink to this definition"></a></dt>
+<dd><p>Select the specific model according to the model name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>model_name</strong> (<em>str</em>) – The correct name of the selected model. If the model has not been implemented, it will raise an
+exception.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.py.model.general_models.et_models.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/model/general_models.html#et_models.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.model.general_models.et_models.run" title="Permalink to this definition"></a></dt>
+<dd><p>Train the selected model by calling et_trainer.run().</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.py.model.general_models.et_models.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/model/general_models.html#et_models.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.model.general_models.et_models.save" title="Permalink to this definition"></a></dt>
+<dd><p>Save the selected model’s entity embeddings and relation embedding(/type_of) under the specific folder.
+Default folder is output/results/model_name/dataset_name/torch(tf)/embedding.npy.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.py.model.general_models.et_models.test">
+<span class="sig-name descname"><span class="pre">test</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/model/general_models.html#et_models.test"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.model.general_models.et_models.test" title="Permalink to this definition"></a></dt>
+<dd><p>Test the selected model with the saved entity embeddings and a relation embedding.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="src.py.model.general_models.kge_models">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.py.model.general_models.</span></span><span class="sig-name descname"><span class="pre">kge_models</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kgs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/model/general_models.html#kge_models"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.model.general_models.kge_models" title="Permalink to this definition"></a></dt>
+<dd><p>This class provides a unified interface for the knowledge graph embedding models with pytorch and tf2.
+You can select your model name and then use model.run(), model.test() and model.save() to simply support your
+work. Models are continuously updated.</p>
+<p>PyTorch: Currently supports TransE, TransR, TransH, TransD, TuckER, DisMult, ComplEx, HolE, Analogy, RESCAL, RotatE, SimplE and ConvE.</p>
+<p>Tensorflow: Currently supports TransE and TransH.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>args</strong> (<em>dict</em>) – A python dict from muKG.src.py.args. It stored detailed information about model
+training and testing.</p></li>
+<li><p><strong>kg</strong> (<em>muKG.src.py.KG</em>) – Store the whole information of a KG, like h_dict, r_dict, t_dict,
+train_dataset, valid_dataset, test_dataset and so on.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="src.py.model.general_models.kge_models.get_model">
+<span class="sig-name descname"><span class="pre">get_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/model/general_models.html#kge_models.get_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.model.general_models.kge_models.get_model" title="Permalink to this definition"></a></dt>
+<dd><p>Select the specific model according to the model name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>model_name</strong> (<em>str</em>) – The correct name of the selected model. If the model has not been implemented, it will raise an
+exception.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.py.model.general_models.kge_models.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/model/general_models.html#kge_models.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.model.general_models.kge_models.run" title="Permalink to this definition"></a></dt>
+<dd><p>Train the selected model by calling kge_trainer.run().</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.py.model.general_models.kge_models.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/model/general_models.html#kge_models.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.model.general_models.kge_models.save" title="Permalink to this definition"></a></dt>
+<dd><p>Save the selected model’s entity embedding and relation embedding under the specific folder.
+Default folder is output/results/model_name/dataset_name/torch(tf)/embedding.npy.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.py.model.general_models.kge_models.test">
+<span class="sig-name descname"><span class="pre">test</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/model/general_models.html#kge_models.test"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.model.general_models.kge_models.test" title="Permalink to this definition"></a></dt>
+<dd><p>Test the selected model with the saved entity embedding and relation embedding.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="load.html" class="btn btn-neutral float-left" title="load" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="util.html" class="btn btn-neutral float-right" title="util" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, luoxindi.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

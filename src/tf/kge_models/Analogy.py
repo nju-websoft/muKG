@@ -6,7 +6,7 @@ from ...py.base.losses import get_loss_func_tfv2
 
 tf.compat.v1.enable_eager_execution()
 from .basic_model import BasicModel
-from ...py.base.initializers import init_embeddings_v2
+#from ...py.base.initializers import init_embeddings_v2
 from ...py.load import read
 from ...py.util.util import to_var
 

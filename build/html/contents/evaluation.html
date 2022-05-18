@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>evaluation &mdash; muKG . documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="load" href="load.html" />
+    <link rel="prev" title="base" href="base.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> muKG
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/run.html">Training tutorials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="base.html">base</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">evaluation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-src.py.evaluation.alignment">evaluation.alignment module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-src.py.evaluation.alignment_finder">evaluation.alignment_finder</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-src.py.evaluation.evaluation">evaluation.evaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-src.py.evaluation.similarity">evaluation.similarity</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="load.html">load</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model.html">model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="util.html">util</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">muKG</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>evaluation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/contents/evaluation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="evaluation">
+<h1>evaluation<a class="headerlink" href="#evaluation" title="Permalink to this headline"></a></h1>
+<section id="module-src.py.evaluation.alignment">
+<span id="evaluation-alignment-module"></span><h2>evaluation.alignment module<a class="headerlink" href="#module-src.py.evaluation.alignment" title="Permalink to this headline"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="src.py.evaluation.alignment.greedy_alignment">
+<span class="sig-prename descclassname"><span class="pre">src.py.evaluation.alignment.</span></span><span class="sig-name descname"><span class="pre">greedy_alignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">embed1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embed2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">top_k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nums_threads</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csls_k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accurate</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/evaluation/alignment.html#greedy_alignment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.evaluation.alignment.greedy_alignment" title="Permalink to this definition"></a></dt>
+<dd><p>Search alignment with greedy strategy.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>embed1</strong> (<em>matrix_like</em>) – An embedding matrix of size n1*d, where n1 is the number of embeddings and d is the dimension.</p></li>
+<li><p><strong>embed2</strong> (<em>matrix_like</em>) – An embedding matrix of size n2*d, where n2 is the number of embeddings and d is the dimension.</p></li>
+<li><p><strong>top_k</strong> (<em>list of integers</em>) – Hits&#64;k metrics for evaluating results.</p></li>
+<li><p><strong>nums_threads</strong> (<em>int</em>) – The number of threads used to search alignment.</p></li>
+<li><p><strong>metric</strong> (<em>string</em>) – The distance metric to use. It can be ‘cosine’, ‘euclidean’ or ‘inner’.</p></li>
+<li><p><strong>normalize</strong> (<em>bool</em><em>, </em><em>true</em><em> or </em><em>false.</em>) – Whether to normalize the input embeddings.</p></li>
+<li><p><strong>csls_k</strong> (<em>int</em>) – K value for csls. If k &gt; 0, enhance the similarity by csls.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>alignment_rest</strong> (<em>list</em>) – pairs of aligned entities</p></li>
+<li><p><strong>hits1</strong> (<em>float</em>) – hits&#64;1 values for alignment results</p></li>
+<li><p><strong>mr</strong> (<em>float</em>) – MR values for alignment results</p></li>
+<li><p><strong>mrr</strong> (<em>float</em>) – MRR values for alignment results</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-src.py.evaluation.alignment_finder">
+<span id="evaluation-alignment-finder"></span><h2>evaluation.alignment_finder<a class="headerlink" href="#module-src.py.evaluation.alignment_finder" title="Permalink to this headline"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="src.py.evaluation.alignment_finder.find_alignment">
+<span class="sig-prename descclassname"><span class="pre">src.py.evaluation.alignment_finder.</span></span><span class="sig-name descname"><span class="pre">find_alignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim_mat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_th</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/evaluation/alignment_finder.html#find_alignment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.evaluation.alignment_finder.find_alignment" title="Permalink to this definition"></a></dt>
+<dd><p>Find potential pairs of aligned entities from the similarity matrix.
+The potential pair (x, y) should satisfy: 1) sim(x, y) &gt; sim_th; 2) y is among the nearest-k neighbors of x.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sim_mat</strong> (<em>numpy</em>) – The similarity matrix of entities in two KGs.</p></li>
+<li><p><strong>sim_th</strong> (<em>int</em>) – A threshold. When two entities are more similar than this value, it is considered that they may point to the same entity.</p></li>
+<li><p><strong>k</strong> (<em>int</em>) – This value indicates the top K nearest entities for each entity.</p></li>
+<li><p><strong>Returns</strong> – </p></li>
+<li><p><strong>-------</strong> – </p></li>
+<li><p><strong>potential_aligned_pairs</strong> (<em>list</em>) – According to the given sim_th and k, this function find the potential aligned entities pairs in list format.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-src.py.evaluation.evaluation">
+<span id="evaluation-evaluation"></span><h2>evaluation.evaluation<a class="headerlink" href="#module-src.py.evaluation.evaluation" title="Permalink to this headline"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="src.py.evaluation.evaluation.EntityTypeEvaluator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.py.evaluation.evaluation.</span></span><span class="sig-name descname"><span class="pre">EntityTypeEvaluator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/evaluation/evaluation.html#EntityTypeEvaluator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.evaluation.evaluation.EntityTypeEvaluator" title="Permalink to this definition"></a></dt>
+<dd><p>Evaluate performance of given embedding using entity typing method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>torch.nn.module</em>) – Embedding model inheriting from the right interface.</p></li>
+<li><p><strong>args</strong> (<em>dict</em>) – A dict stored hyperparameters for models training and testing.</p></li>
+<li><p><strong>kg</strong> (<em>muKG.py.load.KG</em>) – A python class stored detailed information of a KG.</p></li>
+<li><p><strong>is_valid</strong> (<em>bool</em>) – If this value is true, this class will evaluate model with valid dataset.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="src.py.evaluation.evaluation.EntityTypeEvaluator.evaluate">
+<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/evaluation/evaluation.html#EntityTypeEvaluator.evaluate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.evaluation.evaluation.EntityTypeEvaluator.evaluate" title="Permalink to this definition"></a></dt>
+<dd><p>Evaluate the model’s performance by predicting missing types.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.py.evaluation.evaluation.EntityTypeEvaluator.print_results">
+<span class="sig-name descname"><span class="pre">print_results</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_digits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/evaluation/evaluation.html#EntityTypeEvaluator.print_results"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.evaluation.evaluation.EntityTypeEvaluator.print_results" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>k</strong> (<em>int</em><em> or </em><em>list</em>) – k (or list of k) such that hit&#64;k will be printed.</p></li>
+<li><p><strong>n_digits</strong> (<em>int</em>) – Number of digits to be printed for hit&#64;k and MRR.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="src.py.evaluation.evaluation.LinkPredictionEvaluator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.py.evaluation.evaluation.</span></span><span class="sig-name descname"><span class="pre">LinkPredictionEvaluator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/evaluation/evaluation.html#LinkPredictionEvaluator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.evaluation.evaluation.LinkPredictionEvaluator" title="Permalink to this definition"></a></dt>
+<dd><p>Evaluate performance of given embedding using link prediction method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>torch.nn.module</em>) – Embedding model inheriting from the right interface.</p></li>
+<li><p><strong>args</strong> (<em>dict</em>) – A dict stored hyperparameters for models training and testing.</p></li>
+<li><p><strong>kg</strong> (<em>muKG.py.load.KG</em>) – A python class stored detailed information of a KG.</p></li>
+<li><p><strong>is_valid</strong> (<em>bool</em>) – If this value is true, this class will evaluate model with valid dataset.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="src.py.evaluation.evaluation.LinkPredictionEvaluator.evaluate">
+<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/evaluation/evaluation.html#LinkPredictionEvaluator.evaluate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.evaluation.evaluation.LinkPredictionEvaluator.evaluate" title="Permalink to this definition"></a></dt>
+<dd><p>Evaluate the model’s performance by predicting missing tails and heads in triples.
+When you run models in PyTorch, we adjust you to add model.eval() and disable torch.grad here.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.py.evaluation.evaluation.LinkPredictionEvaluator.evaluate_t">
+<span class="sig-name descname"><span class="pre">evaluate_t</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/evaluation/evaluation.html#LinkPredictionEvaluator.evaluate_t"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.evaluation.evaluation.LinkPredictionEvaluator.evaluate_t" title="Permalink to this definition"></a></dt>
+<dd><p>Evaluate the model’s performance by predicting missing tails in triples.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.py.evaluation.evaluation.LinkPredictionEvaluator.print_results">
+<span class="sig-name descname"><span class="pre">print_results</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_digits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/evaluation/evaluation.html#LinkPredictionEvaluator.print_results"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.evaluation.evaluation.LinkPredictionEvaluator.print_results" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>k</strong> (<em>int</em><em> or </em><em>list</em>) – k (or list of k) such that hit&#64;k will be printed.</p></li>
+<li><p><strong>n_digits</strong> (<em>int</em>) – Number of digits to be printed for hit&#64;k and MRR.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.py.evaluation.evaluation.valid">
+<span class="sig-prename descclassname"><span class="pre">src.py.evaluation.evaluation.</span></span><span class="sig-name descname"><span class="pre">valid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">embeds1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embeds2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">top_k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threads_num</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'inner'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csls_k</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accurate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/evaluation/evaluation.html#valid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.evaluation.evaluation.valid" title="Permalink to this definition"></a></dt>
+<dd><p>Valid entity alignment models performance by measuring the similarity of entity embedding pairs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>embeds1</strong> (<em>numpy</em>) – Entity embeddings of KG1.</p></li>
+<li><p><strong>embeds2</strong> (<em>numpy</em>) – Entity embeddings of KG2.</p></li>
+<li><p><strong>mapping</strong> (<em>numpy</em>) – The mapping matrix which transfer</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>is_torch</strong></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-src.py.evaluation.similarity">
+<span id="evaluation-similarity"></span><h2>evaluation.similarity<a class="headerlink" href="#module-src.py.evaluation.similarity" title="Permalink to this headline"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="src.py.evaluation.similarity.csls_sim">
+<span class="sig-prename descclassname"><span class="pre">src.py.evaluation.similarity.</span></span><span class="sig-name descname"><span class="pre">csls_sim</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim_mat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/evaluation/similarity.html#csls_sim"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.evaluation.similarity.csls_sim" title="Permalink to this definition"></a></dt>
+<dd><p>Compute pairwise csls similarity based on the input similarity matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sim_mat</strong> (<em>matrix-like</em>) – A pairwise similarity matrix.</p></li>
+<li><p><strong>k</strong> (<em>int</em>) – The number of nearest neighbors.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>csls_sim_mat</strong> – A csls similarity matrix of n1*n2.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>numpy</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.py.evaluation.similarity.sim">
+<span class="sig-prename descclassname"><span class="pre">src.py.evaluation.similarity.</span></span><span class="sig-name descname"><span class="pre">sim</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">embed1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embed2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'inner'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csls_k</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/evaluation/similarity.html#sim"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.evaluation.similarity.sim" title="Permalink to this definition"></a></dt>
+<dd><p>Compute pairwise similarity between the two collections of embeddings.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>embed1</strong> (<em>numpy</em>) – An embedding matrix of size n1*d, where n1 is the number of embeddings and d is the dimension.</p></li>
+<li><p><strong>embed2</strong> (<em>numpy</em>) – An embedding matrix of size n2*d, where n2 is the number of embeddings and d is the dimension.</p></li>
+<li><p><strong>metric</strong> (<em>str</em><em>, </em><em>optional</em><em>, </em><em>inner default.</em>) – The distance metric to use. It can be ‘cosine’, ‘euclidean’, ‘inner’.</p></li>
+<li><p><strong>normalize</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default false.</em>) – Whether to normalize the input embeddings.</p></li>
+<li><p><strong>csls_k</strong> (<em>int</em><em>, </em><em>optional</em><em>, </em><em>0 by default.</em>) – K value for csls. If k &gt; 0, enhance the similarity by csls.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>sim_mat</strong> – An similarity matrix of size n1*n2.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>numpy</p>
+</dd>
+</dl>
+</dd></dl>
+
+<hr class="docutils" />
+<span class="target" id="module-src.py.evaluation"></span></section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="base.html" class="btn btn-neutral float-left" title="base" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="load.html" class="btn btn-neutral float-right" title="load" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, luoxindi.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

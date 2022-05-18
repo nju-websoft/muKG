@@ -24,6 +24,41 @@ def parse_types(relation_set):
 
 # 将一个三元组转为id，存储一个kg所需的各种数据
 class KG:
+    """Store the completed information of single KG.
+
+        Parameters
+        ----------
+        entities_id_dict: dict
+             Dictionary mapping entity labels to their integer key. This is computed if not passed as argument.
+        relations_id_dict: dict
+            Dictionary mapping relation labels to their integer key. This is computed if not passed as argument.
+        attributes_id_dict: dict
+            Dictionary mapping attribute labels to their integer key. This is computed if not passed as argument.
+        type_dict: dict, optional
+            Dictionary of possible entities so that the pair (entity, tpye) gives a true fact. The keys are entity.
+            This is computed if not passed as argument.
+        r_dict: dict
+            Dictionary of possible relations r so that the triple (h,r,t) gives a true fact. The keys are tuples (h, t).
+            This is computed if not passed as argument.
+        t_dict: dict
+            Dictionary of possible entities t so that the triple (h,r,t) gives a true fact. The keys are tuples (h, t).
+            This is computed if not passed as argument.
+        h_dict: dict
+            Dictionary of possible entities h so that the triple (h,r,t) gives a true fact. The keys are tuples (r, t).
+            This is computed if not passed as argument.
+        relation_triples_list: list
+            List of all the train triples tuples (h, r, t). They are loaded from dataset selected by users.
+        test_relation_triples_list: list
+            List of all the test triples tuples (h, r, t). They are loaded from dataset selected by users.
+        valid_relation_triples_list: list
+            List of all the valid triples tuples (h, r, t). They are loaded from dataset selected by users.
+        train_et_list: list
+            List of all the train triples tuples (entity, type). They are loaded from entity typing dataset selected by users.
+        valid_et_list: list
+            List of all the valid triples tuples (entity, type). They are loaded from entity typing dataset selected by users.
+        test_et_list: list
+            List of all the test triples tuples (entity, type). They are loaded from entity typing dataset selected by users.
+    """
     def __init__(self, relation_triples, attribute_triples):
         self.type_dict = None
         self.r_dict = None
@@ -79,6 +114,22 @@ class KG:
         print()
 
     def set_relations(self, relation_triples):
+        """Set relation triples (h, r, t).
+
+            Parameters
+            ----------
+            relation_triples: list
+                List of all the training triples (h, r, t)
+
+            Returns
+            -------
+            entities_num: int
+                The total numbers of entities in the dataset.
+            relations_num: int
+                The total numbers of relations in the dataset.
+            relation_triples_num: int
+                The total numbers of training triples in the dataset.
+        """
         self.relation_triples_set = set(relation_triples)
         self.relation_triples_list = list(self.relation_triples_set)
         self.local_relation_triples_set = self.relation_triples_set
@@ -97,6 +148,12 @@ class KG:
         self.parse_relations()
         
     def set_valid_relations(self, valid_relations):
+        """Set relation triples (h, r, t).
+            Parameters
+            ----------
+            valid_relations: list
+                List of all the valid triples (h, r, t)
+        """
         self.valid_relation_triples_set = set(valid_relations)
         self.valid_relation_triples_list = list(self.valid_relation_triples_set)
         heads, relations, tails = parse_triples(self.valid_relation_triples_set)
@@ -109,6 +166,12 @@ class KG:
         self.relations_num = len(self.relations_set)
 
     def set_test_relations(self, test_relations):
+        """Set relation triples (h, r, t).
+            Parameters
+            ----------
+            test_relations: list
+                List of all the test triples (h, r, t)
+        """
         self.test_relation_triples_set = set(test_relations)
         self.test_relation_triples_list = list(self.test_relation_triples_set)
         heads, relations, tails = parse_triples(self.test_relation_triples_set)
@@ -121,6 +184,20 @@ class KG:
         self.relations_num = len(self.relations_set)
         
     def set_attributes(self, attribute_triples):
+        """Set attribute triples (e, a, v).
+            Parameters
+            ----------
+            attribute_triples: list
+                List of all the attribute triples (e, a, v).
+
+            Returns
+            -------
+            attributes_list: list
+            List of all the attribute.
+            attributes_num: int
+            The total number of attribute.
+
+        """
         self.attribute_triples_set = set(attribute_triples)
         self.attribute_triples_list = list(self.attribute_triples_set)
         self.local_attribute_triples_set = self.attribute_triples_set
@@ -142,6 +219,14 @@ class KG:
         self.parse_attributes()
 
     def generate_attribute_triple_dict(self):
+        """Generate attribute triples dict according to the attribute triples.
+
+            Returns
+            -------
+            av_dict: dict
+            Dictionary of possible entities e so that the triple (e, a, v) gives a true fact. The keys are tuples (a, v).
+            This is computed if not passed as argument.
+        """
         self.av_dict = dict()
         for h, a, v in self.local_attribute_triples_list:
             av_set = self.av_dict.get(h, set())
@@ -150,6 +235,8 @@ class KG:
         print("Number of av_dict:", len(self.av_dict))
 
     def generate_relation_triple_dict(self):
+        """Generate relation triples dict according to the relation triples.
+        """
         self.rt_dict, self.hr_dict = dict(), dict()
         self.r_dict, self.h_dict, self.t_dict = dict(), dict(), dict()
         for h, r, t in self.local_relation_triples_list:
@@ -178,6 +265,13 @@ class KG:
         print("Number of t_dict:", len(self.t_dict))
 
     def parse_relations(self):
+        """Mapping entity labels to their relations.
+
+            Returns
+            -------
+            entity_relations_dict: dict
+                Dictionary mapping entity labels to their relations key.
+        """
         self.entity_relations_dict = dict()
         for ent, attr, _ in self.local_relation_triples_set:
             attrs = self.entity_relations_dict.get(ent, set())
@@ -186,6 +280,13 @@ class KG:
         print("entity relations dict:", len(self.entity_relations_dict))
 
     def parse_attributes(self):
+        """Mapping entity labels to their attributes.
+
+            Returns
+            -------
+            entity_attributes_dict: dict
+                Dictionary mapping entity labels to their attributes key.
+        """
         self.entity_attributes_dict = dict()
         for ent, attr, _ in self.local_attribute_triples_set:
             attrs = self.entity_attributes_dict.get(ent, set())
@@ -194,6 +295,27 @@ class KG:
         print("entity attributes dict:", len(self.entity_attributes_dict))
 
     def set_type_list(self, train_type_id_dict, valid_type_id_dict, test_type_id_dict):
+        """Set entity and type pairs (entity, type).
+            Parameters
+            ----------
+            train_et_list: list
+                List of all the train pairs tuples (entity, type). They are loaded from dataset selected by users.
+            valid_et_list: list
+                List of all the valid pairs tuples (entity, type). They are loaded from dataset selected by users.
+            test_et_list: list
+                List of all the test pairs tuples (entity, type). They are loaded from dataset selected by users.
+            type_dict: dict
+                Dictionary of possible entities e so that the pair (e, type) gives a true fact. The keys are e.
+            This is computed if not passed as argument.
+
+            Returns
+            -------
+            attributes_list: list
+            List of all the attribute.
+            attributes_num: int
+            The total number of attribute.
+
+        """
         self.train_et_list = train_type_id_dict
         self.valid_et_list = valid_type_id_dict
         self.test_et_list = test_type_id_dict

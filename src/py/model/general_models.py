@@ -73,6 +73,10 @@ class ModelFamily_tf(object):
             return TransE(self.kgs, self.args)
         elif model_name == 'TransH':
             return TransH(self.kgs, self.args)
+
+        from src.tf.et_models.TransE_ET import TransE_ET
+        if model_name == 'TransE_ET':
+            return TransE_ET(self.kgs, self.args)
         """
         elif model_name == 'TransD':
             return TransD(self.args, self.kgs)
@@ -175,9 +179,22 @@ class ModelFamily_torch(object):
 
 
 class kge_models:
-    """
-        kgs need to be rewriten,  its a single kg
-        3.11 tf code needs to be suplemented
+    """This class provides a unified interface for the knowledge graph embedding models with pytorch and tf2.
+    You can select your model name and then use model.run(), model.test() and model.save() to simply support your
+    work. Models are continuously updated.
+
+    PyTorch: Currently supports TransE, TransR, TransH, TransD, TuckER, DisMult, ComplEx, HolE, Analogy, RESCAL, RotatE, SimplE and ConvE.
+
+    Tensorflow: Currently supports TransE and TransH.
+
+    Parameters
+    ----------
+    args: dict
+        A python dict from muKG.src.py.args. It stored detailed information about model
+        training and testing.
+    kg: muKG.src.py.KG
+        Store the whole information of a KG, like h_dict, r_dict, t_dict,
+        train_dataset, valid_dataset, test_dataset and so on.
     """
     def __init__(self, args, kgs):
         self.model = None
@@ -185,6 +202,14 @@ class kge_models:
         self.kgs = kgs
 
     def get_model(self, model_name):
+        """Select the specific model according to the model name.
+
+            Parameters
+            ----------
+            model_name: str
+                The correct name of the selected model. If the model has not been implemented, it will raise an
+                exception.
+        """
         if module_exists():
             from src.torch.kge_models.kge_trainer import kge_trainer, parallel_trainer
             mf = ModelFamily_torch(self.args, self.kgs)
@@ -208,19 +233,38 @@ class kge_models:
             self.model.init(self.args, self.kgs, mod)
 
     def test(self):
+        """Test the selected model with the saved entity embedding and relation embedding.
+        """
         self.model.retest()
 
     def save(self):
+        """Save the selected model's entity embedding and relation embedding under the specific folder.
+        Default folder is output/results/model_name/dataset_name/torch(tf)/embedding.npy.
+        """
         self.model.save()
 
     def run(self):
+        """Train the selected model by calling kge_trainer.run().
+        """
         self.model.run()
 
 
 class ea_models:
-    """
-        kgs need to be rewriten,  its a single kg
-        3.11 tf code needs to be suplemented
+    """This class provides a unified interface for the entity alignment models with pytorch and tf2.
+    You can select your model name and then use model.run(), model.test() and model.save() to simply support your
+    work. Models are continuously updated.
+
+    PyTorch: Currently supports MTransE, AttrE, SEA, GCN-Align, RDGCN, IPTransE, JAPE, BootEA and IMUSE.
+
+    Tensorflow: Currently supports MTransE, AttrE, SEA, GCN-Align, RDGCN, IPTransE, JAPE, BootEA, RSN and IMUSE.
+
+    Parameters
+    ----------
+    args: dict
+        A python dict from muKG.src.py.args. It stored detailed information about model
+        training and testing.
+    kgs: muKG.src.py.KGs
+        Store the whole information of two KGs, like uri_kg1, uri_kg2, uri_train_links, uri_test_links and so on.
     """
     def __init__(self, args, kgs):
         self.model = None
@@ -228,6 +272,14 @@ class ea_models:
         self.kgs = kgs
 
     def get_model(self, model_name):
+        """Select the specific model according to the model name.
+
+            Parameters
+            ----------
+            model_name: str
+                The correct name of the selected model. If the model has not been implemented, it will raise an
+                exception.
+        """
         if module_exists():
             mf = ModelFamily_torch(self.args, self.kgs)
             self.args.is_torch = True
@@ -247,19 +299,39 @@ class ea_models:
             #self.model.run()
 
     def test(self):
+        """Test the selected model with the saved entity embeddings of two KGs.
+        """
         self.model.retest()
 
     def save(self):
+        """Save the selected model's entity embeddings under the specific folder.
+           Default folder is output/results/model_name/dataset_name/torch(tf)/embedding.npy.
+        """
         self.model.save()
 
     def run(self):
+        """Train the selected model by calling kge_trainer.run().
+        """
         self.model.run()
 
 
 class et_models:
-    """
-        kgs need to be rewriten,  its a single kg
-        3.11 tf code needs to be suplemented
+    """This class provides a unified interface for the entity typing models with pytorch and tf2.
+    You can select your model name and then use model.run(), model.test() and model.save() to simply support your
+    work. Models are continuously updated.
+
+    PyTorch: Currently supports TransE_ET, HolE_ET and RESCAL_ET.
+
+    Tensorflow: Currently supports TransE_ET.
+
+    Parameters
+    ----------
+    args: dict
+        A python dict from muKG.src.py.args. It stored detailed information about model
+        training and testing.
+    kg: muKG.src.py.KG
+        Store the whole information of a KG, like h_dict, r_dict, t_dict,
+        train_dataset, valid_dataset, test_dataset and so on.
     """
     def __init__(self, args, kgs):
         self.model = None
@@ -267,6 +339,14 @@ class et_models:
         self.kgs = kgs
 
     def get_model(self, model_name):
+        """Select the specific model according to the model name.
+
+            Parameters
+            ----------
+            model_name: str
+                The correct name of the selected model. If the model has not been implemented, it will raise an
+                exception.
+        """
         if module_exists():
             from src.torch.et_models.et_trainer import et_trainer
             mf = ModelFamily_torch(self.args, self.kgs)
@@ -277,21 +357,27 @@ class et_models:
             self.model = et_trainer()
             self.model.init(self.args, self.kgs, mod)
         else:
+            from src.tf.et_models.et_trainer import et_trainer
             mf = ModelFamily_tf(self.args, self.kgs)
             self.args.is_torch = False
-            self.model = getattr(mf, model_name)
-            if self.model is None:
+            mod = mf.infer_model(model_name)
+            if mod is None:
                 raise Exception("Invalid input symbol or this version of the model is not implemented yet!")
-            self.model.set_args(self.args)
-            self.model.set_kgs(self.kgs)
-            self.model.init()
-            self.model.run()
+            self.model = et_trainer()
+            self.model.init(self.args, self.kgs, mod)
 
     def test(self):
+        """Test the selected model with the saved entity embeddings and a relation embedding.
+        """
         self.model.retest()
 
     def save(self):
+        """Save the selected model's entity embeddings and relation embedding(/type_of) under the specific folder.
+           Default folder is output/results/model_name/dataset_name/torch(tf)/embedding.npy.
+        """
         self.model.save()
 
     def run(self):
+        """Train the selected model by calling et_trainer.run().
+        """
         self.model.run()

@@ -8,6 +8,20 @@ import tensorflow as tf
 
 
 def init_embeddings(shape, name, init, is_l2_norm, dtype=tf.float32):
+    """Initialize embeddings for ent and rel.
+
+        Parameters
+        ----------
+        shape: list
+            The int list specifies dims of embedding for initializing.
+        init: string
+            This parameter specifies four ways to initialize embeddings, eg:xavier, normal, uniform and unit.
+        is_l2_norm: bool
+            If is_l2_norm is true, it will return an embedding with l2 normalize after initializing.
+        Returns
+        -------
+        embedding: torch.nn.Embedding
+    """
     embeds = None
     if init == 'xavier':
         embeds = xavier_init(shape, name, is_l2_norm, dtype=dtype)

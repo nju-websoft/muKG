@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>load &mdash; muKG . documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="model" href="model.html" />
+    <link rel="prev" title="evaluation" href="evaluation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> muKG
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/run.html">Training tutorials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="base.html">base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="evaluation.html">evaluation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">load</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-src.py.load.kg">load.kg</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-src.py.load.kgs">load.kgs</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="model.html">model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="util.html">util</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">muKG</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>load</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/contents/load.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="load">
+<h1>load<a class="headerlink" href="#load" title="Permalink to this headline"></a></h1>
+<section id="module-src.py.load.kg">
+<span id="load-kg"></span><h2>load.kg<a class="headerlink" href="#module-src.py.load.kg" title="Permalink to this headline"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="src.py.load.kg.KG">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.py.load.kg.</span></span><span class="sig-name descname"><span class="pre">KG</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">relation_triples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attribute_triples</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/load/kg.html#KG"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.load.kg.KG" title="Permalink to this definition"></a></dt>
+<dd><p>Store the completed information of single KG.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>entities_id_dict</strong> (<em>dict</em>) – Dictionary mapping entity labels to their integer key. This is computed if not passed as argument.</p></li>
+<li><p><strong>relations_id_dict</strong> (<em>dict</em>) – Dictionary mapping relation labels to their integer key. This is computed if not passed as argument.</p></li>
+<li><p><strong>attributes_id_dict</strong> (<em>dict</em>) – Dictionary mapping attribute labels to their integer key. This is computed if not passed as argument.</p></li>
+<li><p><strong>type_dict</strong> (<em>dict</em><em>, </em><em>optional</em>) – Dictionary of possible entities so that the pair (entity, tpye) gives a true fact. The keys are entity.
+This is computed if not passed as argument.</p></li>
+<li><p><strong>r_dict</strong> (<em>dict</em>) – Dictionary of possible relations r so that the triple (h,r,t) gives a true fact. The keys are tuples (h, t).
+This is computed if not passed as argument.</p></li>
+<li><p><strong>t_dict</strong> (<em>dict</em>) – Dictionary of possible entities t so that the triple (h,r,t) gives a true fact. The keys are tuples (h, t).
+This is computed if not passed as argument.</p></li>
+<li><p><strong>h_dict</strong> (<em>dict</em>) – Dictionary of possible entities h so that the triple (h,r,t) gives a true fact. The keys are tuples (r, t).
+This is computed if not passed as argument.</p></li>
+<li><p><strong>relation_triples_list</strong> (<em>list</em>) – List of all the train triples tuples (h, r, t). They are loaded from dataset selected by users.</p></li>
+<li><p><strong>test_relation_triples_list</strong> (<em>list</em>) – List of all the test triples tuples (h, r, t). They are loaded from dataset selected by users.</p></li>
+<li><p><strong>valid_relation_triples_list</strong> (<em>list</em>) – List of all the valid triples tuples (h, r, t). They are loaded from dataset selected by users.</p></li>
+<li><p><strong>train_et_list</strong> (<em>list</em>) – List of all the train triples tuples (entity, type). They are loaded from entity typing dataset selected by users.</p></li>
+<li><p><strong>valid_et_list</strong> (<em>list</em>) – List of all the valid triples tuples (entity, type). They are loaded from entity typing dataset selected by users.</p></li>
+<li><p><strong>test_et_list</strong> (<em>list</em>) – List of all the test triples tuples (entity, type). They are loaded from entity typing dataset selected by users.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="src.py.load.kg.KG.generate_attribute_triple_dict">
+<span class="sig-name descname"><span class="pre">generate_attribute_triple_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/load/kg.html#KG.generate_attribute_triple_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.load.kg.KG.generate_attribute_triple_dict" title="Permalink to this definition"></a></dt>
+<dd><p>Generate attribute triples dict according to the attribute triples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>av_dict</strong> (<em>dict</em>)</p></li>
+<li><p><em>Dictionary of possible entities e so that the triple (e, a, v) gives a true fact. The keys are tuples (a, v).</em></p></li>
+<li><p><em>This is computed if not passed as argument.</em></p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.py.load.kg.KG.generate_relation_triple_dict">
+<span class="sig-name descname"><span class="pre">generate_relation_triple_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/load/kg.html#KG.generate_relation_triple_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.load.kg.KG.generate_relation_triple_dict" title="Permalink to this definition"></a></dt>
+<dd><p>Generate relation triples dict according to the relation triples.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.py.load.kg.KG.parse_attributes">
+<span class="sig-name descname"><span class="pre">parse_attributes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/load/kg.html#KG.parse_attributes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.load.kg.KG.parse_attributes" title="Permalink to this definition"></a></dt>
+<dd><p>Mapping entity labels to their attributes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>entity_attributes_dict</strong> – Dictionary mapping entity labels to their attributes key.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.py.load.kg.KG.parse_relations">
+<span class="sig-name descname"><span class="pre">parse_relations</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/load/kg.html#KG.parse_relations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.load.kg.KG.parse_relations" title="Permalink to this definition"></a></dt>
+<dd><p>Mapping entity labels to their relations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>entity_relations_dict</strong> – Dictionary mapping entity labels to their relations key.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.py.load.kg.KG.set_attributes">
+<span class="sig-name descname"><span class="pre">set_attributes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attribute_triples</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/load/kg.html#KG.set_attributes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.load.kg.KG.set_attributes" title="Permalink to this definition"></a></dt>
+<dd><p>Set attribute triples (e, a, v).
+:param attribute_triples: List of all the attribute triples (e, a, v).
+:type attribute_triples: list</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>attributes_list</strong> (<em>list</em>)</p></li>
+<li><p><em>List of all the attribute.</em></p></li>
+<li><p><strong>attributes_num</strong> (<em>int</em>)</p></li>
+<li><p><em>The total number of attribute.</em></p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.py.load.kg.KG.set_relations">
+<span class="sig-name descname"><span class="pre">set_relations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">relation_triples</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/load/kg.html#KG.set_relations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.load.kg.KG.set_relations" title="Permalink to this definition"></a></dt>
+<dd><p>Set relation triples (h, r, t).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>relation_triples</strong> (<em>list</em>) – List of all the training triples (h, r, t)</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>entities_num</strong> (<em>int</em>) – The total numbers of entities in the dataset.</p></li>
+<li><p><strong>relations_num</strong> (<em>int</em>) – The total numbers of relations in the dataset.</p></li>
+<li><p><strong>relation_triples_num</strong> (<em>int</em>) – The total numbers of training triples in the dataset.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.py.load.kg.KG.set_test_relations">
+<span class="sig-name descname"><span class="pre">set_test_relations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">test_relations</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/load/kg.html#KG.set_test_relations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.load.kg.KG.set_test_relations" title="Permalink to this definition"></a></dt>
+<dd><p>Set relation triples (h, r, t).
+:param test_relations: List of all the test triples (h, r, t)
+:type test_relations: list</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.py.load.kg.KG.set_type_list">
+<span class="sig-name descname"><span class="pre">set_type_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_type_id_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valid_type_id_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_type_id_dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/load/kg.html#KG.set_type_list"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.load.kg.KG.set_type_list" title="Permalink to this definition"></a></dt>
+<dd><p>Set entity and type pairs (entity, type).
+:param train_et_list: List of all the train pairs tuples (entity, type). They are loaded from dataset selected by users.
+:type train_et_list: list
+:param valid_et_list: List of all the valid pairs tuples (entity, type). They are loaded from dataset selected by users.
+:type valid_et_list: list
+:param test_et_list: List of all the test pairs tuples (entity, type). They are loaded from dataset selected by users.
+:type test_et_list: list
+:param type_dict: Dictionary of possible entities e so that the pair (e, type) gives a true fact. The keys are e.
+:type type_dict: dict
+:param This is computed if not passed as argument.:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>attributes_list</strong> (<em>list</em>)</p></li>
+<li><p><em>List of all the attribute.</em></p></li>
+<li><p><strong>attributes_num</strong> (<em>int</em>)</p></li>
+<li><p><em>The total number of attribute.</em></p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.py.load.kg.KG.set_valid_relations">
+<span class="sig-name descname"><span class="pre">set_valid_relations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">valid_relations</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/load/kg.html#KG.set_valid_relations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.load.kg.KG.set_valid_relations" title="Permalink to this definition"></a></dt>
+<dd><p>Set relation triples (h, r, t).
+:param valid_relations: List of all the valid triples (h, r, t)
+:type valid_relations: list</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-src.py.load.kgs">
+<span id="load-kgs"></span><h2>load.kgs<a class="headerlink" href="#module-src.py.load.kgs" title="Permalink to this headline"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="src.py.load.kgs.KGs">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.py.load.kgs.</span></span><span class="sig-name descname"><span class="pre">KGs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kg1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#src.py.load.kg.KG" title="src.py.load.kg.KG"><span class="pre">src.py.load.kg.KG</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">kg2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#src.py.load.kg.KG" title="src.py.load.kg.KG"><span class="pre">src.py.load.kg.KG</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_links</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_links</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valid_links</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mapping'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ordered</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/load/kgs.html#KGs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.load.kgs.KGs" title="Permalink to this definition"></a></dt>
+<dd><p>This class combines two KGs and generates ids for each entity and relation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>kg1</strong> (<em>muKG.src.py.load.KG</em>) – This object stored detailed information of KG1.</p></li>
+<li><p><strong>kg2</strong> (<em>muKG.src.py.load.KG</em>) – This object stored detailed information of KG2.</p></li>
+<li><p><strong>train_links</strong> (<em>list</em>) – List of train aligned pairs tuples (e1, e2) in two KGS.</p></li>
+<li><p><strong>valid_links</strong> (<em>list</em><em>, </em><em>optional</em>) – List of valid aligned pairs tuples (e1, e2) in two KGS. Default value is None.</p></li>
+<li><p><strong>test_links</strong> (<em>list</em>) – List of test aligned pairs tuples (e1, e2) in two KGS.</p></li>
+<li><p><strong>mode</strong> (<em>str</em>) – This value can be sharing, mapping and swapping. Sharing mode assigns the same id to the pair of entities
+that are already aligned. Mapping mode assigns unique ids to all entities. Swapping mode swaps the head
+and tail entities in the training set triples of two KGs according to the already aligned entity pairs
+to generate new triples.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.py.load.kgs.read_kgs_from_folder">
+<span class="sig-prename descclassname"><span class="pre">src.py.load.kgs.</span></span><span class="sig-name descname"><span class="pre">read_kgs_from_folder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_data_folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">division</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ordered</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_unlinked</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/py/load/kgs.html#read_kgs_from_folder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.py.load.kgs.read_kgs_from_folder" title="Permalink to this definition"></a></dt>
+<dd><p>if ‘dbp15k’ in training_data_folder.lower() or ‘dwy100k’ in training_data_folder.lower():
+return read_kgs_from_dbp_dwy(training_data_folder, division, mode, ordered, remove_unlinked=remove_unlinked)</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="evaluation.html" class="btn btn-neutral float-left" title="evaluation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="model.html" class="btn btn-neutral float-right" title="model" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, luoxindi.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.py.evaluation.similarity &mdash; muKG . documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html" class="icon icon-home"> muKG
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../tutorials/run.html">Training tutorials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/base.html">base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/evaluation.html">evaluation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/load.html">load</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/model.html">model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/util.html">util</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">muKG</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+      <li>src.py.evaluation.similarity</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for src.py.evaluation.similarity</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.spatial.distance</span> <span class="kn">import</span> <span class="n">cdist</span>
+
+<span class="kn">from</span> <span class="nn">src.py.util.env_checker</span> <span class="kn">import</span> <span class="n">module_exists</span>
+
+
+<div class="viewcode-block" id="sim"><a class="viewcode-back" href="../../../../contents/evaluation.html#src.py.evaluation.similarity.sim">[docs]</a><span class="k">def</span> <span class="nf">sim</span><span class="p">(</span><span class="n">embed1</span><span class="p">,</span> <span class="n">embed2</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s1">&#39;inner&#39;</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">csls_k</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute pairwise similarity between the two collections of embeddings.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    embed1 : numpy</span>
+<span class="sd">        An embedding matrix of size n1*d, where n1 is the number of embeddings and d is the dimension.</span>
+<span class="sd">    embed2 : numpy</span>
+<span class="sd">        An embedding matrix of size n2*d, where n2 is the number of embeddings and d is the dimension.</span>
+<span class="sd">    metric : str, optional, inner default.</span>
+<span class="sd">        The distance metric to use. It can be &#39;cosine&#39;, &#39;euclidean&#39;, &#39;inner&#39;.</span>
+<span class="sd">    normalize : bool, optional, default false.</span>
+<span class="sd">        Whether to normalize the input embeddings.</span>
+<span class="sd">    csls_k : int, optional, 0 by default.</span>
+<span class="sd">        K value for csls. If k &gt; 0, enhance the similarity by csls.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    sim_mat : numpy</span>
+<span class="sd">        An similarity matrix of size n1*n2.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">normalize</span><span class="p">:</span>
+        <span class="n">eval_norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">embed1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">embed1</span> <span class="o">=</span> <span class="n">embed1</span> <span class="o">/</span> <span class="n">eval_norm</span>
+        <span class="n">eval_norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">embed2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">embed2</span> <span class="o">=</span> <span class="n">embed2</span> <span class="o">/</span> <span class="n">eval_norm</span>
+        
+    <span class="k">if</span> <span class="n">metric</span> <span class="o">==</span> <span class="s1">&#39;inner&#39;</span><span class="p">:</span>
+        <span class="n">sim_mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">embed1</span><span class="p">,</span> <span class="n">embed2</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>  <span class="c1"># numpy.ndarray, float32</span>
+    <span class="k">elif</span> <span class="n">metric</span> <span class="o">==</span> <span class="s1">&#39;cosine&#39;</span> <span class="ow">and</span> <span class="n">normalize</span><span class="p">:</span>
+        <span class="n">sim_mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">embed1</span><span class="p">,</span> <span class="n">embed2</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>  <span class="c1"># numpy.ndarray, float32</span>
+    <span class="k">elif</span> <span class="n">metric</span> <span class="o">==</span> <span class="s1">&#39;euclidean&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">module_exists</span><span class="p">():</span>
+            <span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="nn">F</span>
+            <span class="n">sim_mat</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">F</span><span class="o">.</span><span class="n">pairwise_distance</span><span class="p">(</span><span class="n">embed1</span><span class="p">,</span> <span class="n">embed2</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">sklearn.metrics.pairwise</span> <span class="kn">import</span> <span class="n">euclidean_distances</span>
+            <span class="n">sim_mat</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">euclidean_distances</span><span class="p">(</span><span class="n">embed1</span><span class="p">,</span> <span class="n">embed2</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">sim_mat</span><span class="p">),</span> <span class="n">sim_mat</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">sim_mat</span> <span class="o">=</span> <span class="n">sim_mat</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">metric</span> <span class="o">==</span> <span class="s1">&#39;cosine&#39;</span><span class="p">:</span>
+        <span class="n">sim_mat</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">cdist</span><span class="p">(</span><span class="n">embed1</span><span class="p">,</span> <span class="n">embed2</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s1">&#39;cosine&#39;</span><span class="p">)</span>   <span class="c1"># numpy.ndarray, float64</span>
+        <span class="n">sim_mat</span> <span class="o">=</span> <span class="n">sim_mat</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">metric</span> <span class="o">==</span> <span class="s1">&#39;manhattan&#39;</span><span class="p">:</span>
+        <span class="n">sim_mat</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">cdist</span><span class="p">(</span><span class="n">embed1</span><span class="p">,</span> <span class="n">embed2</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s1">&#39;cityblock&#39;</span><span class="p">)</span>
+        <span class="n">sim_mat</span> <span class="o">=</span> <span class="n">sim_mat</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">sim_mat</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">cdist</span><span class="p">(</span><span class="n">embed1</span><span class="p">,</span> <span class="n">embed2</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="n">metric</span><span class="p">)</span>
+        <span class="n">sim_mat</span> <span class="o">=</span> <span class="n">sim_mat</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">csls_k</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">sim_mat</span> <span class="o">=</span> <span class="n">csls_sim</span><span class="p">(</span><span class="n">sim_mat</span><span class="p">,</span> <span class="n">csls_k</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">sim_mat</span></div>
+
+
+<div class="viewcode-block" id="csls_sim"><a class="viewcode-back" href="../../../../contents/evaluation.html#src.py.evaluation.similarity.csls_sim">[docs]</a><span class="k">def</span> <span class="nf">csls_sim</span><span class="p">(</span><span class="n">sim_mat</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute pairwise csls similarity based on the input similarity matrix.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    sim_mat : matrix-like</span>
+<span class="sd">        A pairwise similarity matrix.</span>
+<span class="sd">    k : int</span>
+<span class="sd">        The number of nearest neighbors.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    csls_sim_mat : numpy</span>
+<span class="sd">        A csls similarity matrix of n1*n2.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">nearest_values1</span> <span class="o">=</span> <span class="n">calculate_nearest_k</span><span class="p">(</span><span class="n">sim_mat</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+    <span class="n">nearest_values2</span> <span class="o">=</span> <span class="n">calculate_nearest_k</span><span class="p">(</span><span class="n">sim_mat</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+    <span class="n">csls_sim_mat</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">sim_mat</span><span class="o">.</span><span class="n">T</span> <span class="o">-</span> <span class="n">nearest_values1</span>
+    <span class="n">csls_sim_mat</span> <span class="o">=</span> <span class="n">csls_sim_mat</span><span class="o">.</span><span class="n">T</span> <span class="o">-</span> <span class="n">nearest_values2</span>
+    <span class="k">return</span> <span class="n">csls_sim_mat</span></div>
+
+
+<span class="k">def</span> <span class="nf">calculate_nearest_k</span><span class="p">(</span><span class="n">sim_mat</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+    <span class="n">sorted_mat</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="o">-</span><span class="n">sim_mat</span><span class="p">,</span> <span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># -np.sort(-sim_mat1)</span>
+    <span class="n">nearest_k</span> <span class="o">=</span> <span class="n">sorted_mat</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">:</span><span class="n">k</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">nearest_k</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, luoxindi.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

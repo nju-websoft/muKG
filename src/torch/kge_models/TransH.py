@@ -25,7 +25,6 @@ class TransH(BasicModel):
             requires_grad=False
         )
         self.epsilon = 2.0
-        self.norm_flag = self.args.ent_l2_norm
         self.p_norm = 1
         self.projected = False
         self.ent_embeddings = nn.Embedding(self.ent_tot, self.dim)

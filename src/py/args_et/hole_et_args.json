@@ -4,14 +4,11 @@
   	"dataset_division": "",
 
   	"embedding_module": "HolE_ET",
-  	"alignment_module": "sharing",
-	"search_module": "greedy",
+  	"alignment_module": "",
 	  
     "dim": 100,
-  	"init": "normal",
 	"ent_l2_norm": true,
 	"rel_l2_norm": true,
-	"loss_norm": "L2",
 	"margin": 1.5,
 	"loss": "logistic",
 
@@ -22,9 +19,6 @@
     "optimizer": "Adagrad",
 	"max_epoch": 100,
 	"batch_size": 5000,
-
-	"batch_threads_num": 2,
-	"test_threads_num": 4,
 
 	"ordered": true,
 	"start_valid": 10,

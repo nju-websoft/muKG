@@ -50,10 +50,14 @@ def greedy_alignment(embed1, embed2, top_k, nums_threads, metric, normalize, csl
 
         Returns
         -------
-        alignment_rest :  list, pairs of aligned entities
-        hits1 : float, hits@1 values for alignment results
-        mr : float, MR values for alignment results
-        mrr : float, MRR values for alignment results
+        alignment_rest :  list
+            pairs of aligned entities
+        hits1 : float
+            hits@1 values for alignment results
+        mr : float
+            MR values for alignment results
+        mrr : float
+            MRR values for alignment results
         """
     t = time.time()
     sim_mat = sim(embed1, embed2, metric=metric, normalize=normalize, csls_k=csls_k)
@@ -102,17 +106,6 @@ def greedy_alignment(embed1, embed2, top_k, nums_threads, metric, normalize, csl
 
 
 def find_alignment(sim_mat, sim_th, k):
-    """
-    Find potential pairs of aligned entities from the similarity matrix.
-    The potential pair (x, y) should satisfy: 1) sim(x, y) > sim_th; 2) y is among the nearest-k neighbors of x.
-
-    Parameters
-    ----------
-    :param sim_mat:
-    :param sim_th:
-    :param k:
-    :return:
-    """
     # 找到大于th的行和列的索引对，放在set中
     potential_aligned_pairs = filter_sim_mat(sim_mat, sim_th)
     if len(potential_aligned_pairs) == 0:

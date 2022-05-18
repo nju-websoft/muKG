@@ -15,18 +15,15 @@ class TransE(BasicModel):
         self.dim = self.args.dim
         self.margin = self.args.margin
         # self.epsilon = epsilon
-        self.p_norm = self.args.loss_norm
+        self.p_norm = 'L1'
 
         self.ent_embeddings = init_embeddings([self.ent_tot, self.dim], 'ent_embeddings',
-                                               self.args.init, self.args.ent_l2_norm, dtype=tf.float32)
+                                              'xavier', False, dtype=tf.float32)
         # 初始化关系翻译向量空间
         self.rel_embeddings = init_embeddings([self.rel_tot, self.dim], 'rel_embeddings',
-                                              self.args.init, self.args.rel_l2_norm, dtype=tf.float32)
+                                              'xavier', False, dtype=tf.float32)
 
     def calc(self, h, r, t):
-        '''h = F.normalize(h, 2, -1)
-		r = F.normalize(r, 2, -1)
-		t = F.normalize(t, 2, -1)'''
         if self.p_norm == 'L1':
             score = tf.math.reduce_sum(tf.math.abs(h + r - t), -1)
         else:
@@ -57,11 +54,9 @@ class TransE(BasicModel):
         r = tf.nn.embedding_lookup(self.rel_embeddings, batch_r)
         t = tf.nn.embedding_lookup(self.ent_embeddings, batch_t)
         score = self.calc(h, r, t)
-        self.batch_size = int(len(batch_h) / (self.args.neg_triple_num + 1))
-        po_score = self.get_pos_score(score)
-        ne_score = self.get_neg_score(score)
-        score = get_loss_func_tfv2(po_score, ne_score, self.args)
-        #score = tf.math.reduce_sum(tf.math.maximum(po_score - ne_score + self.margin, 0))
+        #self.batch_size = int(len(batch_h) / (self.args.neg_triple_num + 1))
+        #po_score = self.get_pos_score(score)
+        #ne_score = self.get_neg_score(score)
+        #score = get_loss_func_tfv2(po_score, ne_score, self.args)
+        # score = tf.math.reduce_sum(tf.math.maximum(po_score - ne_score + self.margin, 0))
         return score
-
-

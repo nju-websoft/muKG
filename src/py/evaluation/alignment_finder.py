@@ -3,8 +3,6 @@ import time
 
 import igraph as ig
 import numpy as np
-# from graph_tool.all import Graph, max_cardinality_matching  # necessary
-# from graph_tool.all import Graph, max_cardinality_matching  # necessary
 
 
 def find_potential_alignment_greedily(sim_mat, sim_th):
@@ -34,10 +32,17 @@ def find_alignment(sim_mat, sim_th, k):
 
     Parameters
     ----------
-    :param sim_mat:
-    :param sim_th:
-    :param k:
-    :return:
+    sim_mat: numpy
+        The similarity matrix of entities in two KGs.
+    sim_th: int
+        A threshold. When two entities are more similar than this value, it is considered that they may point to the same entity.
+    k: int
+        This value indicates the top K nearest entities for each entity.
+
+    Returns:
+    -------
+    potential_aligned_pairs: list
+        According to the given sim_th and k, this function find the potential aligned entities pairs in list format.
     """
     # 找到大于th的行和列的索引对，放在set中
     potential_aligned_pairs = filter_sim_mat(sim_mat, sim_th)

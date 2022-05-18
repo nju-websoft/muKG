@@ -27,24 +27,6 @@ def get_score(h, r, t):
 
 
 def get_rank(data, true, low_values=False):
-    """Computes the rank of entity at index true[i]. If the rank is k then
-    there are k-1 entities with better (higher or lower) value in data.
-
-    Parameters
-    ----------
-    data: `torch.Tensor`, dtype: `torch.float`, shape: (n_facts, dimensions)
-        Scores for each entity.
-    true: `torch.Tensor`, dtype: `torch.int`, shape: (n_facts)
-        true[i] is the index of the true entity for test i of the batch.
-    low_values: bool, optional (default=False)
-        if True, best rank is the lowest score else it is the highest.
-
-    Returns
-    -------
-    ranks: `torch.Tensor`, dtype: `torch.int`, shape: (n_facts)
-        ranks[i] - 1 is the number of entities which have better (or same)
-        scores in data than the one and index true[i]
-    """
     true_data = data[list(range(len(true))), true]
     true_data = np.expand_dims(true_data, 1)
     if low_values:
@@ -54,29 +36,6 @@ def get_rank(data, true, low_values=False):
 
 
 def get_true_targets(dictionary, key1, key2, true_idx, i):
-    """For a current index `i` of the batch, returns a tensor containing the
-    indices of entities for which the triplet is an existing one (i.e. a true
-    one under CWA).
-
-    Parameters
-    ----------
-    dictionary: default dict
-        Dictionary of keys (int, int) and values list of ints giving all
-        possible entities for the (entity, relation) pair.
-    key1: torch.Tensor, shape: (batch_size), dtype: torch.long
-    key2: torch.Tensor, shape: (batch_size), dtype: torch.long
-    true_idx: torch.Tensor, shape: (batch_size), dtype: torch.long
-        Tensor containing the true entity for each sample.
-    i: int
-        Indicates which index of the batch is currently treated.
-
-    Returns
-    -------
-    true_targets: torch.Tensor, shape: (batch_size), dtype: torch.long
-        Tensor containing the indices of entities such that
-        (e_idx[i], r_idx[i], true_target[any]) is a true fact.
-
-    """
     try:
         true_targets = dictionary[(key1[i], key2[i])].copy()
         if true_idx is not None:
@@ -127,6 +86,20 @@ def parse_triples(relation_set):
 
 
 class EntityTypeEvaluator:
+    """Evaluate performance of given embedding using entity typing method.
+
+        Parameters
+        ----------
+        model: torch.nn.module
+            Embedding model inheriting from the right interface.
+        args: dict
+            A dict stored hyperparameters for models training and testing.
+        kg: muKG.py.load.KG
+            A python class stored detailed information of a KG.
+        is_valid: bool
+            If this value is true, this class will evaluate model with valid dataset.
+
+        """
     def __init__(self, model, args, kg, is_valid=False):
         self.evaluated = None
         self.rank_true_heads = np.array([])
@@ -146,14 +119,6 @@ class EntityTypeEvaluator:
             ''' needs to be implemented with tf'''
             return score.numpy()
 
-    def freeze_model(self):
-        for param in self.model.features.parameters():
-            param.requires_grad = False
-
-    def activate_model(self):
-        for param in self.model.features.parameters():
-            param.requires_grad = True
-
     def trans_load_data(self):
         if self.is_valid:
             n = int(len(self.kg.valid_et_list) / 100)
@@ -164,6 +129,9 @@ class EntityTypeEvaluator:
         return kg1_list
 
     def evaluate(self):
+        """
+            Evaluate the model's performance by predicting missing types.
+        """
         kg1_list = self.trans_load_data()
         # candidate = ent_embeds
         # candidate = np.expand_dims(candidate, 0).repeat(1000, axis=0)
@@ -177,8 +145,6 @@ class EntityTypeEvaluator:
             h_embeds, r_embeds, t_embeds, candidates = self.model.get_embeddings(head, relation, tail)
             score = self.fomulate(self.model.get_score(h_embeds, r_embeds, candidates))
             filtered_score = filter_scores(score.copy(), self.kg.type_dict, head, relation, tail)
-            #filtered_score = score
-            #filtered_score = filter_scores(score.copy(), self.kg.type_dict, head, relation, tail)
             self.rank_true_tails = np.append(self.rank_true_tails, get_rank(score, tail, True))
             self.filt_rank_true_tails = np.append(self.filt_rank_true_tails, get_rank(filtered_score, tail, True))
             del h_embeds, r_embeds, t_embeds, candidates
@@ -187,18 +153,6 @@ class EntityTypeEvaluator:
         self.model.projected = False
 
     def mean_rank(self):
-        """
-
-        Returns
-        -------
-        mean_rank: float
-            Mean rank of the true entity when replacing alternatively head
-            and tail in any fact of the dataset.
-        filt_mean_rank: float
-            Filtered mean rank of the true entity when replacing
-            alternatively head and tail in any fact of the dataset.
-
-        """
         if not self.evaluated:
             raise Exception('Evaluator not evaluated call ''LinkPredictionEvaluator.evaluate')
         sum_ = (np.mean(self.rank_true_tails))
@@ -215,22 +169,6 @@ class EntityTypeEvaluator:
         return tail_hit, filt_tail_hit
 
     def hit_at_k(self, k=10):
-        """
-
-        Parameters
-        ----------
-        k: int
-            Hit@k is the number of entities that show up in the top k that
-            give facts present in the dataset.
-
-        Returns
-        -------
-        avg_hitatk: float
-            Average of hit@k for head and tail replacement.
-        filt_avg_hitatk: float
-            Filtered average of hit@k for head and tail replacement.
-
-        """
         if not self.evaluated:
             raise Exception('Evaluator not evaluated call '
                             'LinkPredictionEvaluator.evaluate')
@@ -239,17 +177,6 @@ class EntityTypeEvaluator:
         return tail_hit, filt_tail_hit
 
     def mrr(self):
-        """
-
-        Returns
-        -------
-        avg_mrr: float
-            Average of mean recovery rank for head and tail replacement.
-        filt_avg_mrr: float
-            Filtered average of mean recovery rank for head and tail
-            replacement.
-
-        """
         if not self.evaluated:
             raise Exception('Evaluator not evaluated call '
                             'LinkPredictionEvaluator.evaluate')
@@ -260,17 +187,16 @@ class EntityTypeEvaluator:
 
     def print_results(self, k=None, n_digits=3):
         """
-
-        Parameters
-        ----------
-        k: int or list
-            k (or list of k) such that hit@k will be printed.
-        n_digits: int
-            Number of digits to be printed for hit@k and MRR.
+            Parameters
+            ----------
+            k: int or list
+                k (or list of k) such that hit@k will be printed.
+            n_digits: int
+                Number of digits to be printed for hit@k and MRR.
         """
         self.evaluate()
         if k is None:
-            k = 10
+            k = self.args.top_k
 
         if k is not None and type(k) == int:
             print('Hit@{} : {} \t\t Filt. Hit@{} : {}'.format(
@@ -290,6 +216,20 @@ class EntityTypeEvaluator:
 
 
 class LinkPredictionEvaluator:
+    """Evaluate performance of given embedding using link prediction method.
+
+            Parameters
+            ----------
+            model: torch.nn.module
+                Embedding model inheriting from the right interface.
+            args: dict
+                A dict stored hyperparameters for models training and testing.
+            kg: muKG.py.load.KG
+                A python class stored detailed information of a KG.
+            is_valid: bool
+                If this value is true, this class will evaluate model with valid dataset.
+
+            """
     def __init__(self, model, args, kg, is_valid=False):
         self.evaluated = None
         self.rank_true_heads = np.array([])
@@ -309,14 +249,6 @@ class LinkPredictionEvaluator:
             ''' needs to be implemented with tf'''
             return score.numpy()
 
-    def freeze_model(self):
-        for param in self.model.features.parameters():
-            param.requires_grad = False
-
-    def activate_model(self):
-        for param in self.model.features.parameters():
-            param.requires_grad = True
-
     def trans_load_data(self):
         if self.is_valid:
             n = int(len(self.kg.valid_relation_triples_list) / 1000)
@@ -327,6 +259,9 @@ class LinkPredictionEvaluator:
         return kg1_list
 
     def evaluate_t(self):
+        """
+            Evaluate the model's performance by predicting missing tails in triples.
+        """
         kg1_list = self.trans_load_data()
         # candidate = ent_embeds
         # candidate = np.expand_dims(candidate, 0).repeat(1000, axis=0)
@@ -349,6 +284,10 @@ class LinkPredictionEvaluator:
         self.model.projected = False
 
     def evaluate(self):
+        """
+            Evaluate the model's performance by predicting missing tails and heads in triples.
+            When you run models in PyTorch, we adjust you to add model.eval() and disable torch.grad here.
+        """
         kg1_list = self.trans_load_data()
         # candidate = ent_embeds
         # candidate = np.expand_dims(candidate, 0).repeat(1000, axis=0)
@@ -356,10 +295,6 @@ class LinkPredictionEvaluator:
         self.rank_true_tails = np.array([])
         self.filt_rank_true_heads = np.array([])
         self.filt_rank_true_tails = np.array([])
-        """
-            When you run models in PyTorch, we adjust you to add model.eval() here and 
-            disable torch.grad 
-        """
         for triple_batch in tqdm(kg1_list):
             head, relation, tail = parse_triples(triple_batch)
             start = time.time()
@@ -379,18 +314,6 @@ class LinkPredictionEvaluator:
         self.model.projected = False
 
     def mean_rank(self):
-        """
-
-        Returns
-        -------
-        mean_rank: float
-            Mean rank of the true entity when replacing alternatively head
-            and tail in any fact of the dataset.
-        filt_mean_rank: float
-            Filtered mean rank of the true entity when replacing
-            alternatively head and tail in any fact of the dataset.
-
-        """
         if not self.evaluated:
             raise Exception('Evaluator not evaluated call ''LinkPredictionEvaluator.evaluate')
         sum_ = (np.mean(self.rank_true_heads) +
@@ -399,18 +322,6 @@ class LinkPredictionEvaluator:
         return sum_ / 2, filt_sum / 2
 
     def mean_rank_tails(self):
-        """
-
-        Returns
-        -------
-        mean_rank: float
-            Mean rank of the true entity when replacing alternatively head
-            and tail in any fact of the dataset.
-        filt_mean_rank: float
-            Filtered mean rank of the true entity when replacing
-            alternatively head and tail in any fact of the dataset.
-
-        """
         if not self.evaluated:
             raise Exception('Evaluator not evaluated call ''LinkPredictionEvaluator.evaluate')
         sum_ = np.mean(self.rank_true_tails)
@@ -436,22 +347,6 @@ class LinkPredictionEvaluator:
         return tail_hit, filt_tail_hit
 
     def hit_at_k(self, k=10):
-        """
-
-        Parameters
-        ----------
-        k: int
-            Hit@k is the number of entities that show up in the top k that
-            give facts present in the dataset.
-
-        Returns
-        -------
-        avg_hitatk: float
-            Average of hit@k for head and tail replacement.
-        filt_avg_hitatk: float
-            Filtered average of hit@k for head and tail replacement.
-
-        """
         if not self.evaluated:
             raise Exception('Evaluator not evaluated call '
                             'LinkPredictionEvaluator.evaluate')
@@ -462,17 +357,6 @@ class LinkPredictionEvaluator:
         return (head_hit + tail_hit) / 2, (filt_head_hit + filt_tail_hit) / 2
 
     def mrr(self):
-        """
-
-        Returns
-        -------
-        avg_mrr: float
-            Average of mean recovery rank for head and tail replacement.
-        filt_avg_mrr: float
-            Filtered average of mean recovery rank for head and tail
-            replacement.
-
-        """
         if not self.evaluated:
             raise Exception('Evaluator not evaluated call '
                             'LinkPredictionEvaluator.evaluate')
@@ -485,17 +369,6 @@ class LinkPredictionEvaluator:
                 (filt_head_mrr + filt_tail_mrr) / 2)
 
     def mrr_tails(self):
-        """
-
-        Returns
-        -------
-        avg_mrr: float
-            Average of mean recovery rank for head and tail replacement.
-        filt_avg_mrr: float
-            Filtered average of mean recovery rank for head and tail
-            replacement.
-
-        """
         if not self.evaluated:
             raise Exception('Evaluator not evaluated call '
                             'LinkPredictionEvaluator.evaluate')
@@ -555,6 +428,21 @@ class LinkPredictionEvaluator:
 
 
 def valid(embeds1, embeds2, mapping, top_k, threads_num, metric='inner', normalize=False, csls_k=0, accurate=False):
+    """Valid entity alignment models performance by measuring the similarity of entity embedding pairs.
+
+        Parameters
+        ----------
+        embeds1: numpy
+            Entity embeddings of KG1.
+        embeds2: numpy
+            Entity embeddings of KG2.
+        mapping: numpy
+            The mapping matrix which transfer
+
+        Returns
+        -------
+        is_torch: bool
+    """
     if mapping is None:
         _, hits1_12, mr_12, mrr_12, _ = greedy_alignment(embeds1, embeds2, top_k, threads_num,
                                                          metric, normalize, csls_k, accurate)

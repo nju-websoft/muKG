@@ -5,13 +5,16 @@ from src.py.util.env_checker import module_exists
 
 
 def to_var(batch, device):
+    """Change an array to a variable, and put it to the specific device(CPU OR GPU).
+    """
     from torch.autograd import Variable
     import torch
     return Variable(torch.from_numpy(np.array(batch)).to(device))
 
 
 def to_tensor(batch, device):
-    from torch.autograd import Variable
+    """Change an array to a tensor, and put it to the specific device(CPU OR GPU).
+    """
     import torch
     a = np.array(batch)
     a = torch.from_numpy(a)
@@ -19,7 +22,6 @@ def to_tensor(batch, device):
 
 
 def to_tensor_cpu(batch):
-    from torch.autograd import Variable
     import torch
     return torch.from_numpy(np.array(batch))
 
@@ -37,6 +39,8 @@ def merge_dic(dic1, dic2):
 
 
 def early_stop(flag1, flag2, flag):
+    """Terminate model training by checking if accuracy drops.
+    """
     if flag <= flag2 <= flag1:
         print("\n == should early stop == \n")
         return flag2, flag, True
@@ -45,6 +49,13 @@ def early_stop(flag1, flag2, flag):
 
 
 def task_divide(idx, n):
+    """Divide ids into n steps.
+
+    Returns
+    -------
+    tasks: list
+        Specify id list for each task.
+    """
     total = len(idx)
     if n <= 0 or 0 == total:
         return [idx]

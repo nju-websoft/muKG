@@ -4,14 +4,10 @@
   	"dataset_division": "",
 
   	"embedding_module": "TransD",
-  	"alignment_module": "sharing",
-	"search_module": "greedy",
-	  "test_tail": false,
+  	"alignment_module": "",
     "dim": 100,
-  	"init": "normal",
 	"ent_l2_norm": true,
 	"rel_l2_norm": true,
-	"loss_norm": "L2",
 	"margin": 1,
 	"loss": "margin-based",
 

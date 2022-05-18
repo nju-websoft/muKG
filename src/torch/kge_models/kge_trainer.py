@@ -238,7 +238,7 @@ def trainer(config: Dict):
     flag2 = -1
 
     train_dataset = PyTorchTrainDataset(kgs.relation_triples_list, args.neg_triple_num, kgs)
-    worker_batch_size = args.batch_size * 4 // train.world_size()
+    worker_batch_size = args.batch_size * args.num_worker // train.world_size()
     data_loader = DataLoader(train_dataset, batch_size=worker_batch_size,
                              collate_fn=train_dataset.collate_fn, shuffle=True,
                              pin_memory=True, num_workers=10)
@@ -288,6 +288,17 @@ def trainer(config: Dict):
 
 
 class parallel_trainer(parallel_model):
+    """Provides multi-process and multi-GPU parallel training for KGE models, inheriting class parallel_model
+
+        Parameters
+        ----------
+        args: dict
+            A python dict from muKG.src.py.args. It stored detailed information about model
+            training and testing.
+        kg: muKG.src.py.KG
+            Store the whole information of a KG, like h_dict, r_dict, t_dict,
+            train_dataset, valid_dataset, test_dataset and so on.
+    """
     def __init__(self):
         super(parallel_trainer, self).__init__()
         self.kgs = None
@@ -298,6 +309,8 @@ class parallel_trainer(parallel_model):
         self.NetworkActor = None
 
     def run(self):
+        """Initialize ray with number of GPU or CPU.
+        """
         self.args.device_number = min(self.args.num_worker, self.args.device_number)
         if self.args.is_gpu:
             ray.init(num_gpus=self.args.device_number)
@@ -306,7 +319,11 @@ class parallel_trainer(parallel_model):
         self.train_fashion_mnist()
 
     def train_fashion_mnist(self):
+        """
+        Activate ray train by allocating device number and worker number.
+        """
         device_allocate = self.args.device_number / self.args.num_worker
+        device_allocate = min(device_allocate, 1)
         if self.args.is_gpu:
             trainer1 = Trainer(backend="torch", num_workers=self.args.num_worker, use_gpu=self.args.is_gpu,
                                resources_per_worker={"GPU": device_allocate})
