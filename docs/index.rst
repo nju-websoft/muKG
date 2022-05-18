@@ -7,10 +7,6 @@
 muKG
 ========
 
-.. image:: https://github.com/nju-websoft/muKG/blob/main/figs/logo.png
-    :align: right
-    :width: 100px
-    :alt: logo muKG
 
 **muKG** is an open-source Python library for representation learning over knowledge graphs. muKG supports joint representation learning over multi-source knowledge graphs (and also a single knowledge graph), multiple deep learning libraries (PyTorch and TF2), multiple embedding tasks (link prediction, entity alignment, entity typing, and multi-source link prediction), and multiple parallel computing modes (multi-process and multi-GPU computing).
 
