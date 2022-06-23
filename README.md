@@ -278,6 +278,15 @@ We give the evaluation results of the efficiency of the proposed library μKG he
 <img src="https://github.com/nju-websoft/muKG/blob/main/figs/time.png" width="500" alt="image-20220508150812794" style="zoom: 50%;" />
 </div>
 
+We further compare the training time used by μKG with LibKGE and PyKEEN. The backbone of μKG in this experiment is also PyTorch. We use the same hyper-parameter settings (e.g., batch size and maximum training epochs) for each model in the three libraries. The following table gives the training time of ConvE and RotatE on FB15K-237 with a single GPU for calculation.
+
+| Models |  μKG  | LibKGE  | PyKEEN  |
+| :----: | :---: |:-------:|:-------:|
+| RotatE | 639 s | 3,260 s | 1,085 s |
+| ConvE  | 824 s | 1,801 s |  961 s  |
+
+
+
 ## License
 
 This project is licensed under the GPL License - see the [LICENSE](LICENSE) file for details
