@@ -28,7 +28,7 @@
    2. [Evaluator](#evaluator)
    3. [ET datasets](#et-datasets)
    4. [Multi-GPU and multi-processing computation](#multi-gpu-and-multi-processing-computation)
-6. [Experiments on Efficiency 🔬](#experiments-on-efficiency-)
+6. [Running Experiments 🔬](#running-experiments-)
 7. [License](#license)
 8. [Citation](#citation)
 
