@@ -9,6 +9,7 @@ sys.path.append(rootPath)
 from src.py.args_handler import load_args
 from src.py.load.kgs import read_kgs_from_folder
 from src.py.model.general_models import kge_models, ea_models, et_models
+os.environ['CUDA_VISIBLE_DEVICES'] = "0, 1, 2, 3"
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 
 
@@ -16,7 +17,7 @@ if __name__ == '__main__':
     t = time.time()
     curPath = os.path.abspath(os.path.dirname(__file__))
     model_name = 'conve'
-    args = load_args(curPath + "/args_kge/" + model_name + r"_FB15K_args.json")
+    args = load_args(curPath + "/args_multi_gpus/" + model_name + r"_args.json")
 
     print(args.embedding_module)
     print(args)

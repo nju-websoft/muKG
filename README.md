@@ -274,6 +274,13 @@ python main_args.py -t lp -m transe -o train -d data/FB15K -r gpu:2 -w 2
 
 ### Instruction
 
+We have provided the hyper-parameters of some models for critical experiments in the paper. These scripts can be founded in the folder [experiments](https://github.com/nju-websoft/muKG/tree/main/src/py/experiments). You can simply select the specific model in the corresponding Python file to reproduce experiments.  The results in this paper shows that these models have achieved competitive performance in three embedding tasks(link prediction, entity alignment, entity typing), respectively. And we suggest you to check GPU resources before doing experiments on efficiency. Then add the following code to set GPU IDs for all RAY workers.
+
+```bash
+os.environ['CUDA_VISIBLE_DEVICES'] = "GPU IDs set"
+```
+
+
 ### Efficiency of multi-GPU training
 
 We give the evaluation results of the efficiency of the proposed library μKG here. The experiments were conducted on a server with an Intel Xeon Gold 6240 2.6GHz CPU, 512GB of memory and four NVIDIA Tesla V100 GPUs. The following figure compares the training time of RotatE and ConvE on FB15K-237 when using different numbers of GPUs. 
