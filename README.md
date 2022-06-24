@@ -270,13 +270,19 @@ To use the following command line to train your model with multi-GPU and multi-p
 # When you run on one or more GPUs, use os.environ['CUDA_VISIBLE_DEVICES'] to set GPU id list first 
 python main_args.py -t lp -m transe -o train -d data/FB15K -r gpu:2 -w 2  
 ```
-## Experiments on Efficiency 🔬
+## Running Experiments 🔬
+
+### Instruction
+
+### Efficiency of multi-GPU training
 
 We give the evaluation results of the efficiency of the proposed library μKG here. The experiments were conducted on a server with an Intel Xeon Gold 6240 2.6GHz CPU, 512GB of memory and four NVIDIA Tesla V100 GPUs. The following figure compares the training time of RotatE and ConvE on FB15K-237 when using different numbers of GPUs. 
 
 <div align=center>
 <img src="https://github.com/nju-websoft/muKG/blob/main/figs/time.png" width="500" alt="image-20220508150812794" style="zoom: 50%;" />
 </div>
+
+### Training time comparison of different libraries
 
 We further compare the training time used by μKG with LibKGE and PyKEEN. The backbone of μKG in this experiment is also PyTorch. We use the same hyper-parameter settings (e.g., batch size and maximum training epochs) for each model in the three libraries. The following table gives the training time of ConvE and RotatE on FB15K-237 with a single GPU for calculation.
 
