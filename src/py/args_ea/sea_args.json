@@ -18,7 +18,7 @@
 	"alpha_2": 0.25,
 
     "neg_sampling": "uniform",
-	"neg_triple_num": 5,
+	"neg_triple_num": 1,
 
 	"learning_rate": 0.01,
     "optimizer": "Adam",

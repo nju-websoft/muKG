@@ -1,5 +1,5 @@
 {
-	"training_data": "data/OpenEA_dataset_v1.1/EN_FR_15K_V1/",
+	"training_data": "data/OpenEA_dataset_v1.1/EN_DE_15K_V1/",
   	"output": "../../output/results/",
   	"dataset_division": "721_5fold/1/",
 
@@ -16,7 +16,7 @@
 	"loss": "margin_based",
 
     "neg_sampling": "uniform",
-	"neg_triple_num": 2,
+	"neg_triple_num": 1,
 
 	"learning_rate": 0.01,
     "optimizer": "Adam",

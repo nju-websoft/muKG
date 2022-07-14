@@ -7,3 +7,4 @@ python-Levenshtein
 scikit-learn
 numpy
 gensim
+redis
