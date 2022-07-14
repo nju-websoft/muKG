@@ -311,8 +311,8 @@ This project is licensed under the GPL License - see the [LICENSE](LICENSE) file
   author    = {Xindi Luo and
   	       Zequn Sun and
                Wei Hu},
-  title     = {μKG: A Library for Multi-source Knowledge Graph Embeddings and Applications},
-  booktitle = {Under review of ISWC 2022},
+  title     = {$\mu$KG: A Library for Multi-source Knowledge Graph Embeddings and Applications},
+  booktitle = {ISWC},
   year      = {2022}
 }
 ```
