@@ -312,7 +312,7 @@ This project is licensed under the GPL License - see the [LICENSE](LICENSE) file
   	       Zequn Sun and
                Wei Hu},
   title     = {μKG: A Library for Multi-source Knowledge Graph Embeddings and Applications},
-  booktitle = {ISWC 2022},
+  booktitle = {ISWC},
   year      = {2022}
 }
 ```
