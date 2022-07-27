@@ -255,7 +255,7 @@ The subgraph sampler is to support GNN-based embedding models like GCN-Align and
 
 ### Evaluator
 
-**(joint) link prediction & entity typing:** It uses the energy function to compute the plausibility of a candidate triple. The implemented metrics for assessing the performance of embedding tasks include Hits@K, mean rank (MR) and mean reciprocal rank (MRR). The hyperparameter json file stored in `args` subfolder allows you to set Hits@K.
+**(joint) link prediction & entity typing:** This module is inspired by [TorchKGE](https://github.com/torchkge-team/torchkge), a PyTorch-based library for efficient training and evaluation of KG embedding. It uses the energy function to compute the plausibility of a candidate triple. The implemented metrics for assessing the performance of embedding tasks include Hits@K, mean rank (MR) and mean reciprocal rank (MRR). The hyperparameter json file stored in `args` subfolder allows you to set Hits@K.
 
 **entity alignment**: It provides several metrics to measure entity embedding similarities, such as the cosine, inner, Euclidean distance, and cross-domain similarity local scaling. The evaluation process can be accelerated using multiprocessing. 
 ### Multi-GPU and multi-processing computation
