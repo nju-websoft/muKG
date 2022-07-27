@@ -23,7 +23,7 @@ if __name__ == '__main__':
     remove_unlinked = False
     kgs = read_kgs_from_folder('et', args.training_data, args.dataset_division, args.alignment_module, args.ordered,
                                remove_unlinked=remove_unlinked)
-    model = kge_models(args, kgs)
+    model = et_models(args, kgs)
     model.get_model('HolE_ET')
     model.run()
     model.test()

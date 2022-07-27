@@ -1,5 +1,5 @@
 {
-	"training_data": "data/Countries/Countries_S2/",
+	"training_data": "../data/FB15K237/",
   	"output": "../../output/results/",
   	"dataset_division": "",
     "alignment_module": "",
@@ -28,7 +28,7 @@
 	"stop_metric": "hits1",
 	"top_k": [1, 5, 10, 50],
 	"is_save": true,
-	"is_gpu": true,
+	"is_gpu": false,
 	"is_parallel": true,
 	"device_number": 4,
 	"num_worker": 4

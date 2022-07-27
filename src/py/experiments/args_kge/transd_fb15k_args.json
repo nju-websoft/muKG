@@ -1,5 +1,5 @@
 {
-	"training_data": "data/FB15K/",
+	"training_data": "../data/FB15K/",
   	"output": "../../output/results/",
   	"dataset_division": "",
 

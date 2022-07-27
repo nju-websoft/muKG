@@ -1,5 +1,5 @@
 {
-	"training_data": "data/OpenEA_dataset_v1.1/EN_DE_15K_V1/",
+	"training_data": "../data/OpenEA_dataset_v1.1/EN_DE_15K_V1/",
   	"output": "../../output/results/",
   	"dataset_division": "721_5fold/1/",
 

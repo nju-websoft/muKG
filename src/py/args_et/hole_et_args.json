@@ -29,5 +29,6 @@
 	"top_k": [1, 5, 10, 50],
 	"is_save": true,
 	"eval_norm": false,
-	"is_gpu": true
+	"is_gpu": true,
+	"is_parallel": false
 }

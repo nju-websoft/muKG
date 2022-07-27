@@ -1,5 +1,5 @@
 {
-	"training_data": "data/Countries/Countries_S2/",
+	"training_data": "../data/Countries/Countries_S2/",
   	"output": "../../output/results/",
   	"dataset_division": "",
 

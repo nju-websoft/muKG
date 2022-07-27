@@ -104,9 +104,6 @@ class et_trainer:
                 t1 = time.time()
                 flag = self.valid.print_results()
                 print('valid cost time: {:.4f}s'.format(time.time() - start))
-                '''self.flag1, self.flag2, self.early_stop = early_stop(self.flag1, self.flag2, flag)
-                if self.early_stop or i == self.args.max_epoch:
-                    break'''
         self.save()
 
     def test(self):

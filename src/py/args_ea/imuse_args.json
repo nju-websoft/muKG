@@ -40,5 +40,5 @@
 	"sim_thresholds_ent": 0.6,
 	"sim_thresholds_attr": 0.6,
 	"interactive_model_iter_num": 1,
-  "is_gpu" : true
+  	"is_gpu" : true
 }
