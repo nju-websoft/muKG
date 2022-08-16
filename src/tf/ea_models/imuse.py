@@ -268,14 +268,11 @@ class IMUSE(BasicModel):
         assert self.args.init == 'normal'
         assert self.args.loss == 'margin-based'
         assert self.args.neg_sampling == 'uniform'
-        assert self.args.optimizer == 'SGD'
         assert self.args.eval_metric == 'inner'
         assert self.args.loss_norm == 'L2'
 
         assert self.args.ent_l2_norm is True
         assert self.args.rel_l2_norm is True
-
-        assert self.args.neg_triple_num == 1
         assert self.args.learning_rate >= 0.01
 
     def _define_variables(self):
@@ -309,7 +306,7 @@ class IMUSE(BasicModel):
         with tf.name_scope('triple_loss'):
             self.triple_loss = get_loss_func_tf(phs, prs, pts, nhs, nrs, nts, self.args)
             self.triple_optimizer = generate_optimizer_tf(self.triple_loss, self.args.learning_rate,
-                                                       opt=self.args.optimizer)
+                                                            opt=self.args.optimizer)
         '''with tf.name_scope('align_loss'):
             self.align_loss = tf.reduce_sum(tf.reduce_sum(tf.pow(ents1 - ents2, 2), 1))
             self.align_optimizer = generate_optimizer(self.align_loss, self.args.learning_rate,
@@ -355,6 +352,7 @@ class IMUSE(BasicModel):
             if i >= self.args.start_valid and i % self.args.eval_freq == 0:
                 flag = self.valid(self.args.stop_metric)
                 self.flag1, self.flag2, self.early_stop = early_stop(self.flag1, self.flag2, flag)
-                if self.early_stop or i == self.args.max_epoch:
+                if i == self.args.max_epoch:
                     break
         print("Training ends. Total time = {:.3f} s.".format(time.time() - t))
+        self.save()

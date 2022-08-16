@@ -19,7 +19,6 @@ class RotatE(BasicModel):
         self.dim_r = self.dim
         self.pi_const = nn.Parameter(torch.Tensor([3.14159265358979323846]))
         self.pi_const.requires_grad = False
-        assert self.args.init == 'uniform'
         self.ent_embeddings = nn.Embedding(self.ent_tot, self.dim_e)
         self.rel_embeddings = nn.Embedding(self.rel_tot, self.dim_r)
         self.ent_embedding_range = nn.Parameter(

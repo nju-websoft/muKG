@@ -136,7 +136,6 @@ class IPTransE(BasicModel):
 
         # customize parameters
         assert self.args.alignment_module == 'sharing'
-        assert self.args.init == 'normal'
         assert self.args.neg_sampling == 'uniform'
         assert self.args.optimizer == 'Adagrad'
         assert self.args.eval_metric == 'inner'

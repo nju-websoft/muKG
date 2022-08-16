@@ -6,20 +6,20 @@
   	"embedding_module": "IMUSE",
   	"alignment_module": "sharing",
 	"search_module": "greedy",
-	  
+
     "dim": 100,
   	"init": "normal",
 	"ent_l2_norm": true,
 	"rel_l2_norm": true,
 	"loss_norm": "L2",
   	"margin": 1.5,
-	"loss": "margin_based",
+	"loss": "margin-based",
 
     "neg_sampling": "uniform",
 	"neg_triple_num": 1,
 
 	"learning_rate": 0.01,
-    "optimizer": "Adam",
+    "optimizer": "SGD",
 	"max_epoch": 1000,
 	"batch_size": 5000,
 

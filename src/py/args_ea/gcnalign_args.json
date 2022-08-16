@@ -29,17 +29,15 @@
 	"no_early": true,
 	"is_save": true,
 	"eval_norm": false,
- 
-  "margin":1,
+
+  	"margin":1,
     "support_number": 1,
     "se_dim": 100,
     "ae_dim": 100,
     "hidden1": 100,
     "gamma": 3,
-    "early_stop": false,
     "dropout": 0,
-
 	"test_method": "sa",
 	"beta": 0.9,
- "is_gpu": true
+ 	"is_gpu": true
 }

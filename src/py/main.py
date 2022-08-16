@@ -15,7 +15,7 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 if __name__ == '__main__':
     t = time.time()
     curPath = os.path.abspath(os.path.dirname(__file__))
-    model_name = 'gcnalign'
+    model_name = 'iptranse'
     kg_task = 'ea'
     if kg_task == 'ea':
         args = load_args(curPath + "/args_ea/" + model_name + r"_args.json")
@@ -37,7 +37,7 @@ if __name__ == '__main__':
         model = kge_models(args, kgs)
     else:
         model = et_models(args, kgs)
-    model.get_model('GCN_Align')
+    model.get_model('IPtransE')
     model.run()
     model.test()
     print("Total run time = {:.3f} s.".format(time.time() - t))

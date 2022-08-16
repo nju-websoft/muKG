@@ -2,7 +2,6 @@ import gc
 import os
 import time
 from math import cos, pi
-import torch
 import numpy as np
 from tqdm import tqdm
 from src.py.evaluation.alignment import greedy_alignment

@@ -177,7 +177,15 @@ class kge_trainer:
 
     def retest(self):
         if self.model.__class__.__name__ == 'ConvE':
-            self.model = torch.load(self.model.out_folder + 'conve.pth')
+            model_params = torch.load(self.model.out_folder + 'conve.pth')
+            total_param_size = []
+            params = [(key, value.size(), value.numel()) for key, value in model_params.items()]
+            for key, size, count in params:
+                total_param_size.append(count)
+                print(key, size, count)
+            print(np.array(total_param_size).sum())
+            self.model.load_state_dict(model_params)
+            self.model.eval()
         else:
             self.model.load_embeddings()
         self.model.to(self.device)
@@ -200,7 +208,7 @@ class kge_trainer:
             if not os.path.exists(self.model.out_folder):
                 os.makedirs(self.model.out_folder)
             # print(self.state_dict())
-            torch.save(self.model, self.model.out_folder + 'conve.pth')
+            torch.save(self.model.state_dict(), self.model.out_folder + 'conve.pth')
             #self.model = torch.load(self.model.out_folder + 'conve.pth')
         else:
             self.model.save()
@@ -223,20 +231,11 @@ def trainer(config: Dict):
     model = config["model"]
     # model = nn.Linear(4, 1)
     # model.module.generate()
-    if args.is_gpu:
-        # torch.cuda.set_device(3)
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        # self.device = torch.device('cuda:2')
-    else:
-        device = torch.device('cpu')
 
     model = train.torch.prepare_model(model)
     valid = LinkPredictionEvaluator(model.module, args, kgs, is_valid=True)
     # model = train.torch.prepare_model(model)
     optimizer = get_optimizer_torch(args.optimizer, model, args.learning_rate)
-    flag1 = -1
-    flag2 = -1
-
     train_dataset = PyTorchTrainDataset(kgs.relation_triples_list, args.neg_triple_num, kgs)
     worker_batch_size = args.batch_size * args.num_worker // train.world_size()
     data_loader = DataLoader(train_dataset, batch_size=worker_batch_size,
@@ -245,7 +244,6 @@ def trainer(config: Dict):
     data_loader = train.torch.prepare_data_loader(data_loader)
     t = time.time()
     for i in range(1, args.max_epoch + 1):
-        # data_loader_kg1 = iter(data_loader)
         res = 0
         start = time.time()
         length = 0

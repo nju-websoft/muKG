@@ -48,25 +48,7 @@ class ModelFamily_tf(object):
         from src.tf.kge_models.Analogy import Analogy
         from src.tf.kge_models.transe import TransE
         from src.tf.kge_models.transh import TransH
-        """
-        from src.tf.kge_models.ComplEx import ComplEx
-        from src.tf.kge_models.DistMult import DistMult
-        from src.tf.kge_models.HolE import HolE
-        from src.tf.kge_models.RESCAL import RESCAL
-        from src.tf.kge_models.TransD import TransD
-        from src.tf.kge_models.TransR import TransR
-        """
-        # self.TransD = TransD()
-        '''
-        self.TransH = TransH(kgs, args)
-        self.TransE = TransE(kgs, args)
-        self.HolE = HolE(kgs, args)
-        self.Analogy = Analogy(kgs, args)
-        self.RESCAL = RESCAL(kgs, args)
-        self.ComplEx = ComplEx(kgs, args)
-        self.DistMult = DistMult(kgs, args)
-        self.TransR = TransR(kgs, args)
-        '''
+
         if model_name == 'Analogy':
             return Analogy(self.kgs, self.args)
         elif model_name == 'TransE':
@@ -77,20 +59,6 @@ class ModelFamily_tf(object):
         from src.tf.et_models.TransE_ET import TransE_ET
         if model_name == 'TransE_ET':
             return TransE_ET(self.kgs, self.args)
-        """
-        elif model_name == 'TransD':
-            return TransD(self.args, self.kgs)
-        elif model_name == 'TransR':
-            return TransR(self.kgs, self.args)
-        elif model_name == 'HolE':
-            return HolE(self.kgs, self.args)
-        elif model_name == 'RESCAL':
-            return RESCAL(self.kgs, self.args)
-        elif model_name == 'ComplEx':
-            return ComplEx(self.kgs, self.args)
-        elif model_name == 'DistMult':
-            return DistMult(self.kgs, self.args)
-        """
 
 
 class ModelFamily_torch(object):

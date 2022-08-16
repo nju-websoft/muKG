@@ -24,7 +24,7 @@
     "neg_margin_balance": 0.2,
 
   	"neg_sampling": "truncated",
-	"neg_triple_num": 10,
+	"neg_triple_num": 20,
 	"truncated_epsilon": 0.9,
 	"truncated_freq": 10,
 

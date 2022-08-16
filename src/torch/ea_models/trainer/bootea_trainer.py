@@ -55,7 +55,6 @@ class bootea_trainer(align_model_trainer):
         self.ref_ent1 = self.kgs.valid_entities1 + self.kgs.test_entities1
         self.ref_ent2 = self.kgs.valid_entities2 + self.kgs.test_entities2
         if self.args.is_gpu:
-            torch.cuda.set_device(2)
             self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         else:
             self.device = torch.device('cpu')

@@ -1,12 +1,12 @@
 import tensorflow._api.v2.compat.v1 as tf
-tf.disable_eager_execution()  #关闭eager运算
-tf.disable_v2_behavior()    #禁用TensorFlow 2.x行为
+
+tf.disable_eager_execution()  # 关闭eager运算
+tf.disable_v2_behavior()  # 禁用TensorFlow 2.x行为
 from src.py.base.initializers import init_embeddings
 from src.py.base.losses import limited_loss_tf
 from src.py.base.optimizers import generate_optimizer_tf
 from src.py.util.util import load_session
 from src.tf.ea_models.basic_model import BasicModel
-
 
 
 class AlignE(BasicModel):
@@ -63,6 +63,7 @@ class AlignE(BasicModel):
             nts = tf.nn.embedding_lookup(self.ent_embeds, self.neg_ts)
         with tf.name_scope('triple_loss'):
             self.triple_loss = limited_loss_tf(phs, prs, pts, nhs, nrs, nts,
-                                            self.args.pos_margin, self.args.neg_margin,
-                                            self.args.loss_norm, balance=self.args.neg_margin_balance)
-            self.triple_optimizer = generate_optimizer_tf(self.triple_loss, self.args.learning_rate, opt=self.args.optimizer)
+                                               self.args.pos_margin, self.args.neg_margin,
+                                               self.args.loss_norm, balance=self.args.neg_margin_balance)
+            self.triple_optimizer = generate_optimizer_tf(self.triple_loss, self.args.learning_rate,
+                                                          opt=self.args.optimizer)

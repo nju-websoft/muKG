@@ -25,7 +25,6 @@ class SEA(BasicModel):
         #assert self.args.init == 'unit'
         assert self.args.loss == 'margin-based'
         assert self.args.alignment_module == 'mapping'
-        assert self.args.loss == 'margin-based'
         assert self.args.neg_sampling == 'uniform'
         # assert self.args.optimizer == 'Adam'
         assert self.args.eval_metric == 'inner'

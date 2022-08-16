@@ -6,7 +6,7 @@ import tensorflow._api.v2.compat.v1 as tf
 
 from src.py.evaluation.evaluation import test, valid
 from src.py.load import read
-from src.py.util.util import merge_dic, load_session
+from src.py.util.util import merge_dic, load_session, early_stop
 from src.tf.ea_models.basic_model import BasicModel
 
 tf.disable_eager_execution()  #关闭eager运算
@@ -778,13 +778,13 @@ class GCN_Align(BasicModel):
                                                                                            time.time() - start))
 
             # ********************no early stop********************************************
-            '''if i >= self.args.start_valid and i % self.args.eval_freq == 0:
+            if i >= self.args.start_valid and i % self.args.eval_freq == 0:
                 self.feed_dict_se = feed_dict_se
                 self.feed_dict_ae = feed_dict_ae
                 flag = self.valid_(self.args.stop_metric)
                 self.flag1, self.flag2, self.early_stop = early_stop(self.flag1, self.flag2, flag)
-                if self.early_stop or i == self.args.max_epoch:
-                    break'''
+                if not self.args.no_early and i == self.args.max_epoch:
+                    break
         vec_se = self.session.run(output, feed_dict=feed_dict_se)
         vec_ae = self.session.run(self.model_ae.outputs, feed_dict=feed_dict_ae)
         self.vec_se = vec_se
@@ -805,7 +805,7 @@ class GCN_Align(BasicModel):
              metric=self.args.eval_metric, normalize=self.args.eval_norm, csls_k=self.args.csls, accurate=True)
         if save:
             ent_ids_rest_12 = [(self.kgs.test_entities1[i], self.kgs.test_entities2[j]) for i, j in rest_12]
-            rd.save_results(self.out_folder, ent_ids_rest_12)
+            read.save_results(self.out_folder, ent_ids_rest_12)
 
     def save(self):
         ent_embeds = self.vec_se
