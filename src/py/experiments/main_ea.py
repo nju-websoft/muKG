@@ -15,7 +15,7 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 if __name__ == '__main__':
     t = time.time()
     curPath = os.path.abspath(os.path.dirname(__file__))
-    model_name = 'imuse'
+    model_name = 'gcnalign'
     args = load_args(curPath + "/args_ea/" + model_name + r"_args.json")
 
     print(args.embedding_module)
@@ -23,8 +23,8 @@ if __name__ == '__main__':
     remove_unlinked = False
     kgs = read_kgs_from_folder('ea', args.training_data, args.dataset_division, args.alignment_module, args.ordered,
                                remove_unlinked=remove_unlinked)
-    model = kge_models(args, kgs)
-    model.get_model('IMUSE')
+    model = ea_models(args, kgs)
+    model.get_model('GCN_Align')
     model.run()
     model.test()
     print("Total run time = {:.3f} s.".format(time.time() - t))
