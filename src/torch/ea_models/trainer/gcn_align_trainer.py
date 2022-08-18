@@ -32,7 +32,7 @@ class gcn_align_trainer(align_model_trainer):
         self.optimizer1 = None
         self.optimizer2 = None
         self.attr = None
-        self.opt = 'SGD'
+        self.opt = 'Adam'
         self.act_func = torch.relu
         self.dropout = 0.0
         # *****************************add*******************************************************
@@ -81,7 +81,11 @@ class gcn_align_trainer(align_model_trainer):
             "dropout": tf.placeholder_with_default(0., shape=()),
             "num_features_nonzero": tf.placeholder_with_default(0, shape=())
         }'''
-        self.device = torch.device('cpu')
+        if self.args.is_gpu:
+            self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        else:
+            self.device = torch.device('cpu')
+
         self.model_ae = GCN_Align_Unit(self.args, self.support, input_dim=self.ae_input[2][1],
                                        output_dim=self.args.ae_dim,
                                        sparse_inputs=True, featureless=False, logging=False)
@@ -91,8 +95,8 @@ class gcn_align_trainer(align_model_trainer):
         print(self.model_ae.parameters())
         self.model_se.to(self.device)
         self.model_ae.to(self.device)
-        self.optimizer1 = get_optimizer_torch(self.opt, self.model_ae, self.args.learning_rate)
-        self.optimizer2 = get_optimizer_torch(self.opt, self.model_se, self.args.learning_rate)
+        self.optimizer1 = get_optimizer_torch('SGD', self.model_ae, self.args.learning_rate)
+        self.optimizer2 = get_optimizer_torch('SGD', self.model_se, self.args.learning_rate)
 
     def train_embeddings(self):
         # **t=train_number k=neg_num
@@ -112,7 +116,8 @@ class gcn_align_trainer(align_model_trainer):
         y_in = [y[1] for y in self.ae_input[0]]
         indices.append(x_in)
         indices.append(y_in)
-        features = torch.sparse_coo_tensor(indices=to_tensor_cpu(indices), values=self.ae_input[1], size=self.ae_input[2]).to(self.device)
+        features = torch.sparse_coo_tensor(indices=to_tensor_cpu(indices), values=self.ae_input[1],
+                                           size=self.ae_input[2]).to(self.device)
         for i in range(1, self.args.max_epoch + 1):
             start = time.time()
             if i % 10 == 1:
@@ -123,13 +128,13 @@ class gcn_align_trainer(align_model_trainer):
             batch_loss1 = self.model_ae({
                 'neg_left': to_var(neg_left, self.device), 'neg_right': to_var(neg_right, self.device),
                 'neg2_left': to_var(neg2_left, self.device), 'neg2_right': to_var(neg2_right, self.device),
-                'features': features, 'support': self.support[0],
+                'features': features, 'support': self.support[0].to(torch.float32).to(self.device),
                 'ILL0': to_var(self.train[:, 0], self.device), 'ILL1': to_var(self.train[:, 1], self.device)
             })
             batch_loss2 = self.model_se({
                 'neg_left': to_var(neg_left, self.device), 'neg_right': to_var(neg_right, self.device),
                 'neg2_left': to_var(neg2_left, self.device), 'neg2_right': to_var(neg2_right, self.device),
-                'features': to_tensor(1., self.device), 'support': self.support[0],
+                'features': to_tensor(1., self.device), 'support': self.support[0].to(torch.float32).to(self.device),
                 'ILL0': to_var(self.train[:, 0], self.device), 'ILL1': to_var(self.train[:, 1], self.device)
             })
             batch_loss1.backward()
@@ -139,16 +144,14 @@ class gcn_align_trainer(align_model_trainer):
             gc.collect()
             batch_loss = batch_loss1 + batch_loss2
             print('epoch {}, avg. relation triple loss: {:.4f}, cost time: {:.4f}s'.format(i, batch_loss,
-                                                                                   time.time() - start))
+                                                                                           time.time() - start))
             # ********************no early stop********************************************
             if i >= 10 and i % self.args.eval_freq == 0:
                 self.feed_dict_se = feed_dict_se
                 self.feed_dict_ae = feed_dict_ae
                 flag = self.valid_(self.args.stop_metric)
                 self.flag1, self.flag2, self.early_stop = early_stop(self.flag1, self.flag2, flag)
-                if self.args.no_early:
-                    self.early_stop = False
-                if self.early_stop or i == self.args.max_epoch:
+                if i == self.args.max_epoch:
                     break
 
     def test(self, save=True):
@@ -179,7 +182,7 @@ class gcn_align_trainer(align_model_trainer):
         if self.args.test_method == "sa":
             ae = self.model_ae.get_output()
             beta = self.args.beta
-            embeddings = np.concatenate([se*beta, ae*(1.0-beta)], axis=1)
+            embeddings = np.concatenate([se * beta, ae * (1.0 - beta)], axis=1)
         else:
             embeddings = se
         embeds1 = np.array([embeddings[e] for e in self.kgs.valid_entities1])

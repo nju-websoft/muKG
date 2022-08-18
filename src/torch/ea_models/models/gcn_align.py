@@ -301,16 +301,16 @@ def align_loss(outlayer, data, gamma, k):
     left_x = torch.index_select(outlayer, 0, left)
     right_x = torch.index_select(outlayer, 0, right)
     A = torch.sum(torch.abs(left_x - right_x), 1).unsqueeze(-1)
-    neg_left = data['neg_left'].to(torch.int32)  # tf.placeholder(tf.int32, [t * k], "neg_left")
-    neg_right = data['neg_right'].to(torch.int32)  # tf.placeholder(tf.int32, [t * k], "neg_right")
+    neg_left = data['neg_left'].to(torch.int32)
+    neg_right = data['neg_right'].to(torch.int32)
     neg_l_x = torch.index_select(outlayer, 0, neg_left)
     neg_r_x = torch.index_select(outlayer, 0, neg_right)
     B = torch.sum(torch.abs(neg_l_x - neg_r_x), 1).unsqueeze(-1)
     C = - B.view(t, k)
     D = A + gamma
     L1 = torch.relu(C + D.view(t, 1))
-    neg_left = data['neg2_left'].to(torch.int32)  # tf.placeholder(tf.int32, [t * k], "neg2_left")
-    neg_right = data['neg2_right'].to(torch.int32)  # tf.placeholder(tf.int32, [t * k], "neg2_right")
+    neg_left = data['neg2_left'].to(torch.int32)
+    neg_right = data['neg2_right'].to(torch.int32)
     neg_l_x = torch.index_select(outlayer, 0, neg_left)
     neg_r_x = torch.index_select(outlayer, 0, neg_right)
     B = torch.sum(torch.abs(neg_l_x - neg_r_x), 1).unsqueeze(-1)
@@ -367,7 +367,6 @@ class GCN_Align_Unit(nn.Module):
     def forward(self, data):
         """ Wrapper for _build() """
         # Build sequential layer model
-        self.activations.append(data)
         hidden = self.layers[0](data)
         data['features'] = hidden
         self.outputs = self.layers[1](data)

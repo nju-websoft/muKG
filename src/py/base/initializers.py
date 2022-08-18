@@ -36,8 +36,6 @@ def init_embeddings(shape, name, init, is_l2_norm, dtype=tf.float32):
 
 def xavier_init(shape, name, is_l2_norm, dtype=None):
     import tensorflow._api.v2.compat.v1 as tf
-    #tf.disable_eager_execution()  #关闭eager运算
-    # tf.disable_v2_behavior()    #禁用TensorFlow 2.x行为
     with tf.name_scope('xavier_init'):
         embeddings = tf.get_variable(name, shape=shape, dtype=dtype,
                                      initializer=tf.keras.initializers.glorot_normal())
@@ -46,8 +44,6 @@ def xavier_init(shape, name, is_l2_norm, dtype=None):
 
 def truncated_normal_init(shape, name, is_l2_norm, dtype=None):
     import tensorflow._api.v2.compat.v1 as tf
-    #tf.disable_eager_execution()  #关闭eager运算
-    # tf.disable_v2_behavior()    #禁用TensorFlow 2.x行为
     with tf.name_scope('truncated_normal'):
         std = 1.0 / math.sqrt(shape[1])
         embeddings = tf.get_variable(name, shape=shape, dtype=dtype,
