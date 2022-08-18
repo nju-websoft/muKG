@@ -285,7 +285,7 @@ class BootEA(AlignE):
             if i * sub_num >= self.args.start_valid:
                 flag = self.valid(self.args.stop_metric)
                 self.flag1, self.flag2, self.early_stop = early_stop(self.flag1, self.flag2, flag)
-                if self.early_stop or i == iter_nums:
+                if not self.args.no_early and i == iter_nums:
                     break
             labeled_align, entities1, entities2 = bootstrapping(self.eval_ref_sim_mat(),
                                                                 self.ref_ent1, self.ref_ent2, labeled_align,

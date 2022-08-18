@@ -12,7 +12,8 @@ import tensorflow._api.v2.compat.v1 as tf
 
 from src.py.evaluation.alignment import find_alignment
 from src.py.evaluation.similarity import sim
-from src.py.util.util import task_divide, merge_dic, generate_out_folder
+from src.py.load import read
+from src.py.util.util import task_divide, merge_dic, generate_out_folder, early_stop
 from src.tf.ea_models.basic_model import BasicModel
 
 tf.disable_eager_execution()  #关闭eager运算
@@ -641,15 +642,15 @@ class AliNetGraphAttentionLayer:
     def _get_variable(self):
         self.kernel = tf.get_variable(self.name + '_kernel', shape=(self.input_dim, self.output_dim),
                                       initializer=tf.glorot_uniform_initializer(),
-                                      regularizer=tf.contrib.layers.l2_regularizer(scale=0.01),
+                                      regularizer=tf.keras.regularizers.l2(l2=0.01),
                                       dtype=self.data_type)
         self.kernel1 = tf.get_variable(self.name + '_kernel_1', shape=(self.input_dim, self.input_dim),
                                        initializer=tf.glorot_uniform_initializer(),
-                                       regularizer=tf.contrib.layers.l2_regularizer(scale=0.01),
+                                       regularizer=tf.keras.regularizers.l2(l2=0.01),
                                        dtype=self.data_type)
         self.kernel2 = tf.get_variable(self.name + '_kernel_2', shape=(self.input_dim, self.input_dim),
                                        initializer=tf.glorot_uniform_initializer(),
-                                       regularizer=tf.contrib.layers.l2_regularizer(scale=0.01),
+                                       regularizer=tf.keras.regularizers.l2(l2=0.01),
                                        dtype=self.data_type)
         self.batch_normlization = tf.keras.layers.BatchNormalization()
 
@@ -974,7 +975,7 @@ class AliNet(BasicModel):
             output_embeds = np.array(output_embeds.eval(session=self.session))
             embeds_list.append(output_embeds)
         ent_embeds = np.concatenate(embeds_list, axis=1)
-        rd.save_embeddings(self.out_folder, self.kgs, ent_embeds, None, None, mapping_mat=None)
+        read.save_embeddings(self.out_folder, self.kgs, ent_embeds, None, None, mapping_mat=None)
 
     # def save(self):
     #     ent_embeds = self.init_embedding
