@@ -270,7 +270,7 @@ class IMUSE(BasicModel):
         assert self.args.neg_sampling == 'uniform'
         assert self.args.eval_metric == 'inner'
         assert self.args.loss_norm == 'L2'
-
+        self.args.neg_triple_num = 1
         assert self.args.ent_l2_norm is True
         assert self.args.rel_l2_norm is True
         assert self.args.learning_rate >= 0.01
