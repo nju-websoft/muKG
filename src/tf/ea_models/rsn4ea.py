@@ -288,8 +288,7 @@ class RSN4EA(BasicReader, BasicSampler, BasicModel):
                                              center=True,
                                              scale=True,
                                              training=is_train,
-                                             reuse=reuse,
-                                             scope='bn',
+                                             reuse=reuse
                                              )
 
     def lstm_cell(self, drop=True, keep_prob=0.5, num_layers=2, hidden_size=None):
@@ -405,10 +404,10 @@ class RSN4EA(BasicReader, BasicSampler, BasicModel):
         ent_outputs = outputs[::2]
 
         # RSN
-        res_rel_outputs = tf.layers.dense(rel_outputs, hidden_size, biases_initializer=None
+        res_rel_outputs = tf.layers.dense(rel_outputs, hidden_size, bias_initializer=None
                                           ) + \
                           tf.layers.dense(
-                              ent_bn_em, hidden_size, biases_initializer=None)
+                              ent_bn_em, hidden_size, bias_initializer=None)
 
         # recover the order
         res_rel_outputs = [res_rel_outputs[:, i, :] for i in range((length - 1) // 2)]
