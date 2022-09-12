@@ -19,7 +19,7 @@
 	"max_epoch": 2000,
 	"batch_size": 5000,
 	"ordered": true,
-	"batch_threads_num": 2,
+	"batch_threads_num": 10,
 	"start_valid": 10,
 	"eval_freq": 10,
 	"stop_metric": "hits1",
