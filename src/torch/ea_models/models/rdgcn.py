@@ -162,10 +162,10 @@ class Layer(nn.Module):
         self.dropout = args.dropout
         self.act_func = torch.relu
         self.gamma = args.gamma
-        '''if args.is_gpu:
+        if args.is_gpu:
             self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        else:'''
-        self.device = torch.device('cpu')
+        else:
+            self.device = torch.device('cpu')
         self.ILL = to_tensor(np.array(kg.train_links), self.device)
         self.k = args.neg_triple_num
         self.alpha = args.alpha
@@ -173,7 +173,7 @@ class Layer(nn.Module):
         self.triple_list = kg.kg1.relation_triples_list + kg.kg2.relation_triples_list
         self.rel_num = kg.relations_num
         self.ent_num = kg.entities_num
-    
+
     def init(self):
         self.drop = nn.Dropout(self.dropout)
         self.w0 = self.ones((1, self.dim))
@@ -191,6 +191,10 @@ class Layer(nn.Module):
         self.M, self.M_arr = get_sparse_tensor(self.triple_list, self.ent_num)
         self.head, self.tail, self.head_r, self.tail_r, self.r_mat, self.r_mat_indice, self.r_mat_value, self.r_mat_shape = rfunc(
             self.triple_list, self.ent_num, self.rel_num)
+        self.r_mat = self.r_mat.to(self.device)
+        self.r_mat_value = self.r_mat_value.to(self.device)
+        self.r_mat_indice = self.r_mat_indice.to(self.device)
+        self.M = self.M.to(self.device)
         self.head_l = to_tensor(self.head_r, self.device).T
         self.tail_l = to_tensor(self.tail_r, self.device).T
         self.kernel_gate = glorot([self.dim, self.dim])
@@ -330,16 +334,16 @@ class Layer(nn.Module):
         left_x = torch.index_select(outlayer, 0, left)
         right_x = torch.index_select(outlayer, 0, right)
         A = torch.sum(torch.abs(left_x - right_x), 1)
-        neg_left = to_tensor(data['neg_left'], self.device).to(torch.int32)
-        neg_right = to_tensor(data['neg_right'], self.device).to(torch.int32)
+        neg_left = data['neg_left'].to(torch.int32)
+        neg_right = data['neg_right'].to(torch.int32)
         neg_l_x = torch.index_select(outlayer, 0, neg_left)
         neg_r_x = torch.index_select(outlayer, 0, neg_right)
         B = torch.sum(torch.abs(neg_l_x - neg_r_x), 1)
         C = - B.view(t, self.k)
         D = A + self.gamma
         L1 = torch.relu(C + D.view(t, 1))
-        neg_left = to_tensor(data['neg2_left'], self.device).to(torch.int32)
-        neg_right = to_tensor(data['neg2_right'], self.device).to(torch.int32)
+        neg_left = data['neg2_left'].to(torch.int32)
+        neg_right = data['neg2_right'].to(torch.int32)
         neg_l_x = torch.index_select(outlayer, 0, neg_left)
         neg_r_x = torch.index_select(outlayer, 0, neg_right)
         B = torch.sum(torch.abs(neg_l_x - neg_r_x), 1)

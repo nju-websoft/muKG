@@ -19,8 +19,8 @@ def generate_out_folder(out_folder, training_data_path, div_path, method_name):
     folder = out_folder + method_name + '/' + path + "/" + div_path + "/"
     print("results output folder:", folder)
     return folder
-    
-    
+
+
 class rdgcn_trainer(align_model_trainer):
     def __init__(self):
         super(rdgcn_trainer, self).__init__()
@@ -42,14 +42,14 @@ class rdgcn_trainer(align_model_trainer):
     def init(self, args, kgs):
         self.args = args
         self.kgs = kgs
-        '''if self.args.is_gpu:
+        if self.args.is_gpu:
             self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        else:'''
-        self.device = torch.device('cpu')
+        else:
+            self.device = torch.device('cpu')
         self.entities = self.kgs.kg1.entities_set | self.kgs.kg2.entities_set
         self.gcn_model = Layer(self.args, self.kgs, self.local_name_vectors)
-        self.gcn_model.to(self.device)
         self.gcn_model.init()
+        self.gcn_model.to(self.device)
         # self.output, self.loss = self.gcn_model.build()
         self.optimizer = get_optimizer_torch('Adam', self.gcn_model, self.args.learning_rate)
 
@@ -88,9 +88,9 @@ class rdgcn_trainer(align_model_trainer):
             if i >= 10 and i % self.args.eval_freq == 0:
                 flag = self.valid_(self.args.stop_metric)
                 self.flag1, self.flag2, self.early_stop = early_stop(self.flag1, self.flag2, flag)
-                if self.args.no_early:
-                    self.early_stop = False
-                if self.early_stop or i == self.args.max_epoch:
+                '''if self.early_stop or i == self.args.max_epoch:
+                    break'''
+                if i == 200:
                     break
         self.test()
         self.save()
@@ -100,7 +100,7 @@ class rdgcn_trainer(align_model_trainer):
         embeds1 = np.array([embedding[e] for e in self.kgs.test_entities1])
         embeds2 = np.array([embedding[e] for e in self.kgs.test_entities2])
         rest_12 = test(embeds1, embeds2, None, self.args.top_k, self.args.test_threads_num,
-                             metric=self.args.eval_metric, normalize=self.args.eval_norm, csls_k=0, accurate=True)
+                       metric=self.args.eval_metric, normalize=self.args.eval_norm, csls_k=0, accurate=True)
         test(embeds1, embeds2, None, self.args.top_k, self.args.test_threads_num,
              metric=self.args.eval_metric, normalize=self.args.eval_norm, csls_k=self.args.csls, accurate=True)
         '''if save:
@@ -108,7 +108,7 @@ class rdgcn_trainer(align_model_trainer):
 
     def save(self):
         out_folder = generate_out_folder(self.args.output, self.args.training_data, self.args.dataset_division,
-                                              self.__class__.__name__)
+                                         self.__class__.__name__)
         embedding = self.gcn_model.get_output()
         read.save_embeddings(out_folder, self.kgs, embedding, None, None, mapping_mat=None)
 
