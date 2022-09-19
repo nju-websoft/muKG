@@ -311,6 +311,11 @@ class align_model_trainer:
             self.model.out_folder = generate_out_folder(self.args.output, self.args.training_data,
                                                         self.args.dataset_division,
                                                         "GCN_Align")
+        if self.__class__.__name__ == "rdgcn_trainer":
+            self.model = BasicModel(self.args, self.kgs)
+            self.model.out_folder = generate_out_folder(self.args.output, self.args.training_data,
+                                                        self.args.dataset_division,
+                                                        "RDGCN")
         self.model.load()
         t = entity_alignment_evaluation(self.model, self.args, self.kgs)
         t.test()

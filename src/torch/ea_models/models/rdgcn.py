@@ -16,7 +16,7 @@ from src.torch.ea_models.models.gcn_align import glorot
 from src.torch.kge_models.basic_model import align_model_trainer
 
 
-def rfunc(triple_list, ent_num, rel_num):
+def rfunc(triple_list, ent_num, rel_num, device):
     head = dict()
     tail = dict()
     rel_count = dict()
@@ -48,7 +48,7 @@ def rfunc(triple_list, ent_num, rel_num):
     del r_mat_ind_y
     del r_mat_ind_x
     gc.collect()
-    r_mat = torch.sparse_coo_tensor(indices=to_tensor_cpu(r_mat_ind), values=r_mat_val, size=[ent_num, ent_num])
+    r_mat = torch.sparse_coo_tensor(indices=to_tensor(r_mat_ind, device), values=to_tensor(r_mat_val, device), size=[ent_num, ent_num])
 
     return head, tail, head_r, tail_r, r_mat, to_tensor_cpu(r_mat_ind), to_tensor_cpu(r_mat_val), [ent_num, ent_num]
 
@@ -71,7 +71,7 @@ def get_mat(triple_list, ent_num):
     return pos, degree
 
 
-def get_sparse_tensor(triple_list, ent_num):
+def get_sparse_tensor(triple_list, ent_num, device):
     pos, degree = get_mat(triple_list, ent_num)
     ind = []
     ind_x = []
@@ -89,7 +89,7 @@ def get_sparse_tensor(triple_list, ent_num):
     del ind_y
     del ind_x
     gc.collect()
-    pos = torch.sparse_coo_tensor(indices=to_tensor_cpu(ind), values=val, size=[ent_num, ent_num])
+    pos = torch.sparse_coo_tensor(indices=to_tensor(ind, device), values=to_tensor(val, device), size=[ent_num, ent_num])
 
     return pos, M_arr
 
@@ -97,8 +97,6 @@ def get_sparse_tensor(triple_list, ent_num):
 def get_neg(ILL, output_layer, k):
     neg = []
     t = len(ILL)
-    if output_layer is None:
-        output_layer = np.load("D:/OPENEA-pytorch/a.npy")
 
     ILL_vec = np.array([output_layer[e1] for e1 in ILL])
     KG_vec = np.array(output_layer)
@@ -188,16 +186,17 @@ class Layer(nn.Module):
         self.conv6 = nn.Conv1d(self.dim, 1, (1,))
         self.conv7 = nn.Conv1d(self.dim, 1, (1,))
         # self.pretrianed_embedding = embedding
-        self.M, self.M_arr = get_sparse_tensor(self.triple_list, self.ent_num)
+        self.M, self.M_arr = get_sparse_tensor(self.triple_list, self.ent_num, self.device)
         self.head, self.tail, self.head_r, self.tail_r, self.r_mat, self.r_mat_indice, self.r_mat_value, self.r_mat_shape = rfunc(
-            self.triple_list, self.ent_num, self.rel_num)
-        self.r_mat = self.r_mat.to(self.device)
+            self.triple_list, self.ent_num, self.rel_num, self.device)
+        #self.r_mat = self.r_mat.to(self.device)
         self.r_mat_value = self.r_mat_value.to(self.device)
         self.r_mat_indice = self.r_mat_indice.to(self.device)
-        self.M = self.M.to(self.device)
+        #self.M = self.M.to(self.device)
         self.head_l = to_tensor(self.head_r, self.device).T
         self.tail_l = to_tensor(self.tail_r, self.device).T
         self.kernel_gate = glorot([self.dim, self.dim])
+        torch.cuda.empty_cache()
 
     def glorot(self, shape, name=None):
         """Glorot & Bengio (AISTATS 2010) init."""
@@ -224,7 +223,7 @@ class Layer(nn.Module):
         # w0 = init([1, self.dim])
         # b = self.w0.repeat(inlayer.shape[0], 1)
         # c = self.w0
-        tosum = torch.matmul(self.M, torch.multiply(inlayer, self.w0))
+        tosum = torch.sparse.mm(self.M.to(torch.float32), torch.multiply(inlayer, self.w0))
         if self.act_func is None:
             return tosum
         else:
@@ -233,7 +232,7 @@ class Layer(nn.Module):
     def add_full_layer(self, inlayer, init=glorot):
         inlayer = self.drop(inlayer)
         # w0 = init([self.dim, self.dim])
-        tosum = torch.matmul(self.M, torch.matmul(inlayer, self.w1))
+        tosum = torch.sparse.mm(self.M, torch.matmul(inlayer, self.w1))
         if self.act_func is None:
             return tosum
         else:
@@ -247,7 +246,7 @@ class Layer(nn.Module):
                                         values=torch.relu(logits),
                                         size=self.r_mat_shape)
         coefs = torch.sparse.softmax(lrelu, 1)
-        vals = torch.matmul(coefs.to_dense(), inlayer)
+        vals = torch.sparse.mm(coefs, inlayer)
         if self.act_func is None:
             return vals
         else:
@@ -334,44 +333,58 @@ class Layer(nn.Module):
         left_x = torch.index_select(outlayer, 0, left)
         right_x = torch.index_select(outlayer, 0, right)
         A = torch.sum(torch.abs(left_x - right_x), 1)
+        del left_x, right_x
+        gc.collect()
         neg_left = data['neg_left'].to(torch.int32)
         neg_right = data['neg_right'].to(torch.int32)
         neg_l_x = torch.index_select(outlayer, 0, neg_left)
         neg_r_x = torch.index_select(outlayer, 0, neg_right)
-        B = torch.sum(torch.abs(neg_l_x - neg_r_x), 1)
-        C = - B.view(t, self.k)
+        C = torch.sum(torch.abs(neg_l_x - neg_r_x), 1)
+        del neg_l_x, neg_r_x, neg_left, neg_right
+        gc.collect()
+        C = - C.view(t, self.k)
         D = A + self.gamma
         L1 = torch.relu(C + D.view(t, 1))
+        del C, A
+        gc.collect()
         neg_left = data['neg2_left'].to(torch.int32)
         neg_right = data['neg2_right'].to(torch.int32)
         neg_l_x = torch.index_select(outlayer, 0, neg_left)
         neg_r_x = torch.index_select(outlayer, 0, neg_right)
         B = torch.sum(torch.abs(neg_l_x - neg_r_x), 1)
-        C = - B.view(t, self.k)
+        del neg_l_x, neg_r_x, neg_left, neg_right
+        gc.collect()
+        C = torch.negative(B.view(t, self.k))
+        del B
+        gc.collect()
         L2 = torch.relu(torch.add(C, D.view(t, 1)))
         return (torch.sum(L1) + torch.sum(L2)) / (2.0 * self.k * t)
 
     def build(self, data):
-        # tf.reset_default_graph()
         dual_X_1, dual_A_1 = self.get_dual_input(self.primal_X_0)
         dual_H_1 = self.add_self_att_layer(dual_X_1, dual_A_1)
         primal_H_1 = self.add_sparse_att_layer(self.primal_X_0, dual_H_1)
         primal_X_1 = self.primal_X_0 + self.alpha * primal_H_1
-
         dual_X_2, dual_A_2 = self.get_dual_input(primal_X_1)
         dual_H_2 = self.add_dual_att_layer(dual_H_1, dual_X_2, dual_A_2)
         primal_H_2 = self.add_sparse_att_layer(primal_X_1, dual_H_2)
         primal_X_2 = self.primal_X_0 + self.beta * primal_H_2
-
+        del dual_X_1, dual_A_1, dual_H_1, primal_H_1, primal_X_1, dual_X_2, dual_A_2, dual_H_2, primal_H_2
+        gc.collect()
+        torch.cuda.empty_cache()
         gcn_layer_1 = self.add_diag_layer(primal_X_2)
         gcn_layer_1 = self.highway(primal_X_2, gcn_layer_1)
         gcn_layer_2 = self.add_diag_layer(gcn_layer_1, )
-        self.output_layer = self.highway(gcn_layer_1, gcn_layer_2)
-        loss = self.get_loss(self.output_layer, data)
+        output_layer = self.highway(gcn_layer_1, gcn_layer_2)
+        del gcn_layer_1, gcn_layer_2, primal_X_2
+        gc.collect()
+        torch.cuda.empty_cache()
+        self.output_layer = output_layer.cpu().detach().numpy()
+        loss = self.get_loss(output_layer, data)
         return loss
 
     def get_output(self):
         if self.output_layer is None:
-            self.output_layer = torch.randn(self.ent_num, self.dim)
-        return self.output_layer.cpu().detach().numpy()
+            self.output_layer = torch.randn(self.ent_num, self.dim).detach().numpy()
+        return self.output_layer
 

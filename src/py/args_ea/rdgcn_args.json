@@ -10,7 +10,7 @@
     "dim": 300,
   	"margin":1,
 	"neg_sampling": "uniform",
-	"neg_triple_num": 1000,
+	"neg_triple_num": 10,
 
 	"learning_rate": 0.002,
 	"max_epoch": 2000,
