@@ -319,8 +319,8 @@ class Layer:
 
     def build(self):
         tf.reset_default_graph()
-        # primal_X_0 = self.get_input_layer()
-        primal_X_0 = self.get_pretrained_input(self.pretrianed_embedding)
+        primal_X_0 = self.get_input_layer()
+        # primal_X_0 = self.get_pretrained_input(self.pretrianed_embedding)
         self.M = get_sparse_tensor(self.triple_list, self.ent_num)
         self.head, self.tail, self.head_r, self.tail_r, self.r_mat = rfunc(self.triple_list, self.ent_num, self.rel_num)
         dual_X_1, dual_A_1 = self.get_dual_input(primal_X_0)
@@ -354,11 +354,11 @@ class RDGCN(BasicModel):
         self.local_name_vectors = None
         self.entity_local_name_dict = None
         self.entities = None
-        self.word_embed = 'D:/wiki-news-300d-1M.vec'
+        self.word_embed = '../../data/wiki-news-300d-1M.vec'
 
     def init(self):
         self.entities = self.kgs.kg1.entities_set | self.kgs.kg2.entities_set
-        _, _, self.local_name_vectors = self._get_desc_input()
+        # _, _, self.local_name_vectors = self._get_desc_input()
         self.gcn_model = Layer(self.args, self.kgs, self.local_name_vectors)
         self.output, self.loss = self.gcn_model.build()
         self.optimizer = tf.train.AdamOptimizer(self.args.learning_rate).minimize(self.loss)
@@ -514,7 +514,7 @@ class RDGCN(BasicModel):
              metric=self.args.eval_metric, normalize=self.args.eval_norm, csls_k=self.args.csls, accurate=True)
         if save:
             ent_ids_rest_12 = [(self.kgs.test_entities1[i], self.kgs.test_entities2[j]) for i, j in rest_12]
-            rd.save_results(self.out_folder, ent_ids_rest_12)
+            read.save_results(self.out_folder, ent_ids_rest_12)
 
     def save(self):
         embedding = self.sess.run(self.output)
