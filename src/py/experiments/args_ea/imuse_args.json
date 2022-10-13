@@ -16,10 +16,10 @@
 	"loss": "margin-based",
 
     "neg_sampling": "uniform",
-	"neg_triple_num": 2,
+	"neg_triple_num": 1,
 
 	"learning_rate": 0.01,
-    "optimizer": "Adam",
+    "optimizer": "SGD",
 	"max_epoch": 1000,
 	"batch_size": 5000,
 
