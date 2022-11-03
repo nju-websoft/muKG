@@ -250,10 +250,10 @@ class LinkPredictionEvaluator:
 
     def trans_load_data(self):
         if self.is_valid:
-            n = int(len(self.kg.valid_relation_triples_list) / 1000)
+            n = int(len(self.kg.valid_relation_triples_list) / 100)
             kg1_list = task_divide(self.kg.valid_relation_triples_list, n)
         else:
-            n = int(len(self.kg.test_relation_triples_list) / 1000)
+            n = int(len(self.kg.test_relation_triples_list) / 100)
             kg1_list = task_divide(self.kg.test_relation_triples_list, n)
         return kg1_list
 
