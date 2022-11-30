@@ -8,16 +8,12 @@ import numpy as np
 import pandas as pd
 
 import scipy
-import tensorflow._api.v2.compat.v1 as tf
-
+import torch
+import torch.nn as nn
 from src.py.evaluation.alignment import find_alignment
 from src.py.evaluation.similarity import sim
 from src.py.load import read
-from src.py.util.util import task_divide, merge_dic, generate_out_folder, early_stop
-from src.tf.ea_models.basic_model import BasicModel
-
-tf.disable_eager_execution()  #关闭eager运算
-tf.disable_v2_behavior()    #禁用TensorFlow 2.x行为
+from src.py.util.util import task_divide, merge_dic, generate_out_folder, early_stop, to_tensor
 import scipy.sparse as sp
 import scipy.special
 
@@ -419,20 +415,17 @@ def enhance_triples(kg1, kg2, ents1, ents2):
 
 def dropout(inputs, drop_rate, noise_shape, is_sparse):
     if not is_sparse:
-        return tf.nn.dropout(inputs, drop_rate)
+        return torch.nn.Dropout(inputs, 1 - drop_rate)
     return sparse_dropout(inputs, drop_rate, noise_shape)
 
 
 def sparse_dropout(x, drop_rate, noise_shape):
-    """
-    Dropout for sparse tensors.
-    """
+    """Dropout for sparse tensors."""
     keep_prob = 1 - drop_rate
-    random_tensor = keep_prob
-    random_tensor += tf.random.uniform(noise_shape)
-    dropout_mask = tf.cast(tf.floor(random_tensor), dtype=tf.bool)
-    pre_out = tf.sparse.retain(x, dropout_mask)
-    return pre_out * (1. / keep_prob)
+    mask = ((torch.rand(x.values().size()) + keep_prob).floor()).type(torch.bool)
+    rc = x.indices()[:, mask]
+    val = x.values()[mask] * (1.0 / keep_prob)
+    return torch.sparse.Tensor(rc, val)
 
 
 def generate_neighbours(entity_embeds1, entity_list1, entity_embeds2, entity_list2, neighbors_num, threads_num=4):
@@ -537,40 +530,43 @@ class AKG:
         print("additional triples:", len(self.additional_triples))
 
 
-class GraphConvolution:
+class GraphConvolution(nn.Module):
     def __init__(self, input_dim, output_dim, adj,
                  num_features_nonzero,
                  dropout_rate=0.0,
                  name='GCN',
                  is_sparse_inputs=False,
-                 activation=tf.tanh,
+                 activation=torch.tanh,
                  use_bias=True):
+        super(GraphConvolution, self).__init__()
         self.activation = activation
         self.input_dim = input_dim
         self.output_dim = output_dim
-        self.adjs = [tf.SparseTensor(indices=am[0], values=am[1], dense_shape=am[2]) for am in adj]
+        self.adjs = [torch.sparse_coo_tensor(indices=am[0].permute(1, 0), values=am[1], size=am[2]) for am in adj]
         self.num_features_nonzero = num_features_nonzero
         self.dropout_rate = dropout_rate
         self.is_sparse_inputs = is_sparse_inputs
         self.use_bias = use_bias
-        self.kernels = list()
-        self.bias = list()
+        self.kernels = nn.ParameterList()
         self.name = name
-        self.data_type = tf.float32
+        self.data_type = torch.float32
+        self.batch_normalization = torch.nn.BatchNorm1d(input_dim)
         self._get_variable()
 
+    def glorot(self, shape, name=None):
+        """Glorot & Bengio (AISTATS 2010) init."""
+        init_range = np.sqrt(6.0 / (shape[0] + shape[1]))
+        t = torch.FloatTensor(shape[0], shape[1])
+        tmp = nn.Parameter(t)
+        nn.init.uniform_(tmp, -init_range, init_range)
+        return tmp
+
     def _get_variable(self):
-        self.batch_normalization = tf.keras.layers.BatchNormalization()
         for i in range(len(self.adjs)):
-            self.kernels.append(tf.get_variable(self.name + '_kernel_' + str(i),
-                                                shape=(self.input_dim, self.output_dim),
-                                                initializer=tf.glorot_uniform_initializer(),
-                                                regularizer=tf.keras.regularizers.l2(0.01),
-                                                dtype=self.data_type))
+            self.kernels.append(self.glorot((self.input_dim, self.output_dim)))
         if self.use_bias:
-            self.bias = tf.get_variable(self.name + '_bias', shape=[self.output_dim, ],
-                                        initializer=tf.zeros_initializer(),
-                                        dtype=self.data_type)
+            tmp = torch.zeros((self.output_dim,))
+            self.bias = nn.Parameter(tmp).to(self.data_type)
 
     def call(self, inputs):
         inputs = self.batch_normalization(inputs)
@@ -578,13 +574,18 @@ class GraphConvolution:
             inputs = dropout(inputs, self.dropout_rate, self.num_features_nonzero, self.is_sparse_inputs)
         hidden_vectors = list()
         for i in range(len(self.adjs)):
-            pre_sup = tf.matmul(inputs, self.kernels[i], a_is_sparse=self.is_sparse_inputs)
-            hidden_vector = tf.sparse_tensor_dense_matmul(tf.cast(self.adjs[i], tf.float32), pre_sup)
+            pre_sup = torch.matmul(inputs, self.kernels[i])
+            hidden_vector = torch.matmul(self.adjs[i].to(torch.float32), pre_sup)
             hidden_vectors.append(hidden_vector)
-        outputs = tf.add_n(hidden_vectors)
+        outputs = None
+        for h in hidden_vectors:
+            if outputs is None:
+                outputs = h
+            else:
+                outputs = outputs + h
         # bias
         if self.use_bias:
-            outputs = tf.nn.bias_add(outputs, self.bias)
+            outputs = torch.add(outputs, self.bias)
         # activation
         if self.activation is not None:
             return self.activation(outputs)
@@ -592,93 +593,104 @@ class GraphConvolution:
 
     def update_adj(self, adj):
         print("gcn update adj...")
-        self.adjs = [tf.SparseTensor(indices=am[0], values=am[1], dense_shape=am[2]) for am in adj]
+        self.adjs = [torch.sparse_coo_tensor(indices=am[0], values=am[1], size=am[2]) for am in adj]
 
 
-class HighwayLayer:
+class HighwayLayer(nn.Module):
     def __init__(self, input_dim, output_dim, dropout_rate=0.0, name="highway"):
+        super(HighwayLayer, self).__init__()
         self.input_shape = (input_dim, output_dim)
         self.name = name
-        self.data_type = tf.float32
+        self.data_type = torch.float32
         self.dropout_rate = dropout_rate
+        self.dropout = torch.nn.Dropout(1 - self.dropout_rate)
         self._get_variable()
 
+    def glorot(self, shape, name=None):
+        """Glorot & Bengio (AISTATS 2010) init."""
+        init_range = np.sqrt(6.0 / (shape[0] + shape[1]))
+        t = torch.FloatTensor(shape[0], shape[1])
+        tmp = nn.Parameter(t)
+        nn.init.uniform_(tmp, -init_range, init_range)
+        return tmp
+
     def _get_variable(self):
-        self.weight = tf.get_variable(self.name + 'kernel', shape=self.input_shape,
-                                      initializer=tf.glorot_uniform_initializer(),
-                                      regularizer=tf.keras.regularizers.l2(0.01),
-                                      dtype=self.data_type)
-        self.activation = tf.tanh
-        self.batch_normal = tf.keras.layers.BatchNormalization()
+        self.weight = self.glorot(self.input_shape)
+        self.activation = torch.tanh
+        self.batch_normal = nn.BatchNorm1d(self.input_shape[0])
 
     def call(self, input1, input2):
         input1 = self.batch_normal(input1)
         input2 = self.batch_normal(input2)
-        gate = tf.matmul(input1, self.weight)
+        gate = torch.matmul(input1, self.weight)
         gate = self.activation(gate)
         if self.dropout_rate > 0:
-            gate = tf.nn.dropout(gate, self.dropout_rate)
-        gate = tf.keras.activations.relu(gate)
-        output = tf.add(tf.multiply(input2, 1 - gate), tf.multiply(input1, gate))
+            gate = self.dropout(gate)
+        gate = torch.relu(gate)
+        output = torch.add(torch.multiply(input2, 1 - gate), torch.multiply(input1, gate))
         return self.activation(output)
 
 
-class AliNetGraphAttentionLayer:
+class AliNetGraphAttentionLayer(nn.Module):
     def __init__(self, input_dim, output_dim, adj, nodes_num,
                  dropout_rate, is_sparse_input=False, use_bias=True,
                  activation=None, name="alinet"):
+        super(AliNetGraphAttentionLayer, self).__init__()
         self.input_dim = input_dim
         self.output_dim = output_dim
-        self.adjs = [tf.SparseTensor(indices=adj[0][0], values=adj[0][1], dense_shape=adj[0][2])]
+        self.adjs = [torch.sparse_coo_tensor(indices=adj[0][0].permute(1, 0), values=adj[0][1], size=adj[0][2])]
         self.dropout_rate = dropout_rate
+        self.dropout = torch.nn.Dropout(1 - self.dropout_rate)
         self.is_sparse_input = is_sparse_input
         self.nodes_num = nodes_num
         self.use_bias = use_bias
         self.activation = activation
         self.name = name
-        self.data_type = tf.float32
+        self.data_type = torch.float32
         self._get_variable()
 
+    def glorot(self, shape, name=None):
+        """Glorot & Bengio (AISTATS 2010) init."""
+        init_range = np.sqrt(6.0 / (shape[0] + shape[1]))
+        t = torch.FloatTensor(shape[0], shape[1])
+        tmp = nn.Parameter(t)
+        nn.init.uniform_(tmp, -init_range, init_range)
+        return tmp
+
     def _get_variable(self):
-        self.kernel = tf.get_variable(self.name + '_kernel', shape=(self.input_dim, self.output_dim),
-                                      initializer=tf.glorot_uniform_initializer(),
-                                      regularizer=tf.keras.regularizers.l2(0.01),
-                                      dtype=self.data_type)
-        self.kernel1 = tf.get_variable(self.name + '_kernel_1', shape=(self.input_dim, self.input_dim),
-                                       initializer=tf.glorot_uniform_initializer(),
-                                       regularizer=tf.keras.regularizers.l2(0.01),
-                                       dtype=self.data_type)
-        self.kernel2 = tf.get_variable(self.name + '_kernel_2', shape=(self.input_dim, self.input_dim),
-                                       initializer=tf.glorot_uniform_initializer(),
-                                       regularizer=tf.keras.regularizers.l2(0.01),
-                                       dtype=self.data_type)
-        self.batch_normlization = tf.keras.layers.BatchNormalization()
+        self.kernel = self.glorot((self.input_dim, self.output_dim))
+        self.kernel1 = self.glorot((self.input_dim, self.input_dim))
+        self.kernel2 = self.glorot((self.input_dim, self.input_dim))
+        self.lkrellu = torch.nn.LeakyReLU()
+        self.batch_normlization = torch.nn.BatchNorm1d(self.input_dim)
 
     def call(self, inputs):
         inputs = self.batch_normlization(inputs)
-        mapped_inputs = tf.matmul(inputs, self.kernel)
-        attention_inputs1 = tf.matmul(inputs, self.kernel1)
-        attention_inputs2 = tf.matmul(inputs, self.kernel2)
-        con_sa_1 = tf.reduce_sum(tf.multiply(attention_inputs1, inputs), 1, keepdims=True)
-        con_sa_2 = tf.reduce_sum(tf.multiply(attention_inputs2, inputs), 1, keepdims=True)
-        con_sa_1 = tf.keras.activations.tanh(con_sa_1)
-        con_sa_2 = tf.keras.activations.tanh(con_sa_2)
+        mapped_inputs = torch.matmul(inputs, self.kernel)
+        attention_inputs1 = torch.matmul(inputs, self.kernel1)
+        attention_inputs2 = torch.matmul(inputs, self.kernel2)
+        con_sa_1 = torch.sum(torch.multiply(attention_inputs1, inputs), 1).unsqueeze(1)
+        con_sa_2 = torch.sum(torch.multiply(attention_inputs2, inputs), 1).unsqueeze(1)
+        con_sa_1 = torch.tanh(con_sa_1)
+        con_sa_2 = torch.tanh(con_sa_2)
         if self.dropout_rate > 0.0:
-            con_sa_1 = tf.nn.dropout(con_sa_1, self.dropout_rate)
-            con_sa_2 = tf.nn.dropout(con_sa_2, self.dropout_rate)
-        con_sa_1 = tf.cast(self.adjs[0], dtype=tf.float32) * con_sa_1
-        con_sa_2 = tf.cast(self.adjs[0], dtype=tf.float32) * tf.transpose(con_sa_2, [1, 0])
-        weights = tf.sparse_add(con_sa_1, con_sa_2)
-        weights = tf.SparseTensor(indices=weights.indices,
-                                  values=tf.nn.leaky_relu(weights.values),
-                                  dense_shape=weights.dense_shape)
-        attention_adj = tf.sparse_softmax(weights)
-        attention_adj = tf.sparse_reshape(attention_adj, shape=[self.nodes_num, self.nodes_num])
-        value = tf.sparse_tensor_dense_matmul(attention_adj, mapped_inputs)
+            con_sa_1 = self.dropout(con_sa_1)
+            con_sa_2 = self.dropout(con_sa_2)
+        con_sa_1 = torch.multiply(self.adjs[0].to(torch.float32).to_dense(), con_sa_1)
+        con_sa_2 = torch.multiply(self.adjs[0].to(torch.float32).to_dense(), con_sa_2.transpose(1, 0))
+        weights = (con_sa_1 + con_sa_2).to_sparse()
+        # print(weights.values)
+        weights = torch.sparse_coo_tensor(indices=weights.indices(),
+                                          values=self.lkrellu(weights.values()),
+                                          size=weights.shape)
+
+        attention_adj = torch.sparse.softmax(weights, 1)
+        # attention_adj = torch.sparse.reshape(attention_adj, shape=[self.nodes_num, self.nodes_num])
+        value = torch.matmul(attention_adj.to_dense(), mapped_inputs)
         return self.activation(value)
 
 
-class AliNet(BasicModel):
+class AliNet(nn.Module):
 
     def set_kgs(self, kgs):
         self.kgs = kgs
@@ -689,6 +701,14 @@ class AliNet(BasicModel):
         self.args = args
         self.out_folder = generate_out_folder(self.args.output, self.args.training_data, self.args.dataset_division,
                                               self.__class__.__name__)
+
+    def glorot(self, shape, name=None):
+        """Glorot & Bengio (AISTATS 2010) init."""
+        init_range = np.sqrt(6.0 / (shape[0] + shape[1]))
+        t = torch.FloatTensor(shape[0], shape[1])
+        tmp = nn.Parameter(t)
+        nn.init.uniform_(tmp, -init_range, init_range)
+        return tmp
 
     def init(self):
         self.ref_ent1 = self.kgs.test_entities1 + self.kgs.valid_entities1
@@ -724,8 +744,18 @@ class AliNet(BasicModel):
                 adj.append(two_adj)
             print('save adj data to', saved_data_path)
             pickle.dump(adj, open(saved_data_path, 'wb'))
+        if self.args.is_gpu:
+            self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        else:
+            self.device = torch.device('cpu')
+        self.adj = list()
+        for ad in adj:
+            tmp = list()
+            tmp.append(to_tensor(ad[0], self.device))
+            tmp.append(to_tensor(ad[1], self.device))
+            tmp.append(list(ad[2]))
+            self.adj.append(tmp)
 
-        self.adj = adj
         self.rel_ht_dict = rel_ht_dict
         self.rel_win_size = self.args.batch_size // len(rel_ht_dict)
         if self.rel_win_size <= 1:
@@ -736,22 +766,41 @@ class AliNet(BasicModel):
         sup_ent2 = np.array(self.sup_ent2).reshape((len(self.sup_ent1), 1))
         weight = np.ones((len(self.kgs.train_entities1), 1), dtype=np.float)
         self.sup_links = np.hstack((sup_ent1, sup_ent2, weight))
-        config = tf.ConfigProto()
-        config.gpu_options.allow_growth = True
-        self.session = tf.Session(config=config)
-        self._get_variable()
-        if self.args.rel_param > 0.0:
-            self._generate_rel_graph()
-        else:
-            self._generate_graph()
+        self.init_embedding = self.glorot((self.kgs.entities_num, self.args.layer_dims[0]))
+        layer_num = len(self.args.layer_dims) - 1
+        for i in range(layer_num):
+            gcn_layer = GraphConvolution(input_dim=self.args.layer_dims[i],
+                                         output_dim=self.args.layer_dims[i + 1],
+                                         adj=[self.adj[0]],
+                                         num_features_nonzero=self.args.num_features_nonzero,
+                                         dropout_rate=0.0,
+                                         name='gcn_' + str(i))
+            self.one_hop_layers.append(gcn_layer)
 
-        tf.global_variables_initializer().run(session=self.session)
+            if i < layer_num - 1:
+                gat_layer = AliNetGraphAttentionLayer(input_dim=self.args.layer_dims[i],
+                                                      output_dim=self.args.layer_dims[i + 1],
+                                                      adj=[self.adj[1]],
+                                                      nodes_num=self.kgs.entities_num,
+                                                      dropout_rate=self.args.dropout,
+                                                      is_sparse_input=False,
+                                                      use_bias=True,
+                                                      activation=torch.tanh,
+                                                      name='alinet_' + str(i)
+                                                      )
+                self.two_hop_layers.append(gat_layer)
+
+                self.highway_layers.append(HighwayLayer(self.args.layer_dims[i + 1],
+                                                        self.args.layer_dims[i + 1],
+                                                        dropout_rate=self.args.dropout))
 
     def __init__(self):
-        super().__init__()
+        super(AliNet, self).__init__()
+        self.device = None
         self.adj = None
-        self.one_hop_layers = None
-        self.two_hop_layers = None
+        self.one_hop_layers = nn.ModuleList()
+        self.two_hop_layers = nn.ModuleList()
+        self.highway_layers = nn.ModuleList()
         self.layers_outputs = None
 
         self.new_edges1, self.new_edges2 = set(), set()
@@ -774,122 +823,71 @@ class AliNet(BasicModel):
         self.sup_ent1 = None
         self.sup_ent2 = None
         self.linked_ents = None
-        self.session = None
-
-    def _get_variable(self):
-        self.init_embedding = tf.get_variable('init_embedding',
-                                              shape=(self.kgs.entities_num, self.args.layer_dims[0]),
-                                              initializer=tf.glorot_uniform_initializer(),
-                                              dtype=tf.float32)
+        self.init_embedding = None
 
     def _define_model(self):
         print('Getting AliNet model...')
         layer_num = len(self.args.layer_dims) - 1
         output_embeds = self.init_embedding
-        one_layers = list()
-        two_layers = list()
         layers_outputs = list()
         for i in range(layer_num):
-            gcn_layer = GraphConvolution(input_dim=self.args.layer_dims[i],
-                                         output_dim=self.args.layer_dims[i + 1],
-                                         adj=[self.adj[0]],
-                                         num_features_nonzero=self.args.num_features_nonzero,
-                                         dropout_rate=0.0,
-                                         name='gcn_' + str(i))
-            one_layers.append(gcn_layer)
-            one_output_embeds = gcn_layer.call(output_embeds)
+            one_output_embeds = self.one_hop_layers[i].call(output_embeds)
 
             if i < layer_num - 1:
-                gat_layer = AliNetGraphAttentionLayer(input_dim=self.args.layer_dims[i],
-                                                      output_dim=self.args.layer_dims[i + 1],
-                                                      adj=[self.adj[1]],
-                                                      nodes_num=self.kgs.entities_num,
-                                                      dropout_rate=self.args.dropout,
-                                                      is_sparse_input=False,
-                                                      use_bias=True,
-                                                      activation=tf.tanh,
-                                                      name='alinet_' + str(i)
-                                                      )
-                two_layers.append(gat_layer)
-                two_output_embeds = gat_layer.call(output_embeds)
-
-                highway_layer = HighwayLayer(self.args.layer_dims[i + 1],
-                                             self.args.layer_dims[i + 1],
-                                             dropout_rate=self.args.dropout)
-                output_embeds = highway_layer.call(two_output_embeds, one_output_embeds)
+                two_output_embeds = self.two_hop_layers[i].call(output_embeds)
+                output_embeds = self.highway_layers[i].call(two_output_embeds, one_output_embeds)
             else:
                 output_embeds = one_output_embeds
 
             layers_outputs.append(output_embeds)
-
-        self.one_hop_layers = one_layers
-        self.two_hop_layers = two_layers
         self.output_embeds_list = layers_outputs
 
     def compute_loss(self, pos_links, neg_links, only_pos=False):
-        index1 = pos_links[:, 0]
-        index2 = pos_links[:, 1]
-        neg_index1 = neg_links[:, 0]
-        neg_index2 = neg_links[:, 1]
+        index1 = pos_links[:, 0].to(torch.int32)
+        index2 = pos_links[:, 1].to(torch.int32)
+        neg_index1 = neg_links[:, 0].to(torch.int32)
+        neg_index2 = neg_links[:, 1].to(torch.int32)
 
         embeds_list = list()
         for output_embeds in self.output_embeds_list + [self.init_embedding]:
-            output_embeds = tf.nn.l2_normalize(output_embeds, 1)
+            output_embeds = nn.functional.normalize(output_embeds, 2, 1)
             embeds_list.append(output_embeds)
-        output_embeds = tf.concat(embeds_list, axis=1)
-        output_embeds = tf.nn.l2_normalize(output_embeds, 1)
+        output_embeds = torch.cat(embeds_list, dim=1)
+        output_embeds = nn.functional.normalize(output_embeds, 2, 1)
+        embeds1 = torch.index_select(output_embeds, 0, index1)
+        embeds2 = torch.index_select(output_embeds, 0, index2)
+        pos_loss = torch.sum(torch.sum(torch.square(embeds1 - embeds2), 1))
 
-        embeds1 = tf.nn.embedding_lookup(output_embeds, tf.cast(index1, tf.int32))
-        embeds2 = tf.nn.embedding_lookup(output_embeds, tf.cast(index2, tf.int32))
-        pos_loss = tf.reduce_sum(tf.reduce_sum(tf.square(embeds1 - embeds2), 1))
-
-        embeds1 = tf.nn.embedding_lookup(output_embeds, tf.cast(neg_index1, tf.int32))
-        embeds2 = tf.nn.embedding_lookup(output_embeds, tf.cast(neg_index2, tf.int32))
-        neg_distance = tf.reduce_sum(tf.square(embeds1 - embeds2), 1)
-        neg_loss = tf.reduce_sum(tf.keras.activations.relu(self.args.neg_margin - neg_distance))
+        embeds1 = torch.index_select(output_embeds, 0, neg_index1)
+        embeds2 = torch.index_select(output_embeds, 0, neg_index2)
+        neg_distance = torch.sum(torch.square(embeds1 - embeds2), 1)
+        neg_loss = torch.sum(torch.relu(self.args.neg_margin - neg_distance))
 
         return pos_loss + self.args.neg_margin_balance * neg_loss
 
     def compute_rel_loss(self, hs, ts):
         embeds_list = list()
         for output_embeds in self.output_embeds_list + [self.init_embedding]:
-            output_embeds = tf.nn.l2_normalize(output_embeds, 1)
+            output_embeds = nn.functional.normalize(output_embeds, 2, 1)
             embeds_list.append(output_embeds)
-        output_embeds = tf.concat(embeds_list, axis=1)
-        output_embeds = tf.nn.l2_normalize(output_embeds, 1)
-        h_embeds = tf.nn.embedding_lookup(output_embeds, tf.cast(hs, tf.int32))
-        t_embeds = tf.nn.embedding_lookup(output_embeds, tf.cast(ts, tf.int32))
-        r_temp_embeds = tf.reshape(h_embeds - t_embeds, [-1, self.rel_win_size, output_embeds.shape[-1]])
-        r_temp_embeds = tf.reduce_mean(r_temp_embeds, axis=1, keepdims=True)
-        r_embeds = tf.tile(r_temp_embeds, [1, self.rel_win_size, 1])
-        r_embeds = tf.reshape(r_embeds, [-1, output_embeds.shape[-1]])
-        r_embeds = tf.nn.l2_normalize(r_embeds, 1)
-        return tf.reduce_sum(tf.reduce_sum(tf.square(h_embeds - t_embeds - r_embeds), 1)) * self.args.rel_param
-
-    def _generate_graph(self):
-        self.pos_links = tf.placeholder(tf.int32, shape=[None, 3], name="pos")
-        self.neg_links = tf.placeholder(tf.int32, shape=[None, 2], name='neg')
-        self._define_model()
-        self.loss = self.compute_loss(self.pos_links, self.neg_links)
-        self.optimizer = tf.train.AdamOptimizer(learning_rate=self.args.learning_rate).minimize(self.loss)
-
-    def _generate_rel_graph(self):
-        self.rel_pos_links = tf.placeholder(tf.int32, shape=[None, 3], name="pos")
-        self.rel_neg_links = tf.placeholder(tf.int32, shape=[None, 2], name='neg')
-        self.hs = tf.placeholder(tf.int32, shape=[None], name="hs")
-        self.ts = tf.placeholder(tf.int32, shape=[None], name='ts')
-        self._define_model()
-        self.loss = self.compute_loss(self.rel_pos_links, self.rel_neg_links) + \
-                    self.compute_rel_loss(self.hs, self.ts)
-        self.optimizer = tf.train.AdamOptimizer(learning_rate=self.args.learning_rate).minimize(self.loss)
+        output_embeds = torch.cat(embeds_list, dim=1)
+        output_embeds = nn.functional.normalize(output_embeds, 2, 1)
+        h_embeds = torch.index_select(output_embeds, 0, hs)
+        t_embeds = torch.index_select(output_embeds, 0, ts)
+        r_temp_embeds = (h_embeds - t_embeds).view(-1, self.rel_win_size, output_embeds.shape[-1])
+        r_temp_embeds = torch.mean(r_temp_embeds, 1)
+        r_embeds = r_temp_embeds.repeat(1, self.rel_win_size, 1)
+        r_embeds = r_embeds.view(-1, output_embeds.shape[-1])
+        r_embeds = nn.functional.normalize(r_embeds, 2, 1)
+        return torch.sum(torch.sum(torch.square(h_embeds - t_embeds - r_embeds), 1)).squeeze() * self.args.rel_param
 
     def augment(self):
-        embeds1 = tf.nn.embedding_lookup(self.output_embeds_list[-1], self.ref_ent1)
-        embeds2 = tf.nn.embedding_lookup(self.output_embeds_list[-1], self.ref_ent2)
-        embeds1 = tf.nn.l2_normalize(embeds1, 1)
-        embeds2 = tf.nn.l2_normalize(embeds2, 1)
-        embeds1 = np.array(embeds1.eval(session=self.session))
-        embeds2 = np.array(embeds2.eval(session=self.session))
+        embeds1 = torch.index_select(self.output_embeds_list[-1], 0, self.ref_ent1)
+        embeds2 = torch.index_select(self.output_embeds_list[-1], 0, self.ref_ent2)
+        embeds1 = nn.functional.normalize(embeds1, 2, 1)
+        embeds2 = nn.functional.normalize(embeds2, 2, 1)
+        embeds1 = embeds1.detach().cpu().numpy()
+        embeds2 = embeds2.detach().cpu().numpy()
         print("calculate sim mat...")
         sim_mat = sim(embeds1, embeds2, csls_k=self.args.csls)
         sim_mat = scipy.special.expit(sim_mat)
@@ -931,18 +929,18 @@ class AliNet(BasicModel):
         input_embeds = self.init_embedding
         output_embeds_list = self.output_embeds_list
         for output_embeds in [input_embeds] + output_embeds_list:
-            output_embeds = tf.nn.l2_normalize(output_embeds, 1)
-            embeds1 = tf.nn.embedding_lookup(output_embeds, ent1)
-            embeds2 = tf.nn.embedding_lookup(output_embeds, ent2)
-            embeds1 = tf.nn.l2_normalize(embeds1, 1)
-            embeds2 = tf.nn.l2_normalize(embeds2, 1)
-            embeds1 = np.array(embeds1.eval(session=self.session))
-            embeds2 = np.array(embeds2.eval(session=self.session))
+            output_embeds = nn.functional.normalize(output_embeds, 2, 1).cpu()
+            embeds1 = torch.index_select(output_embeds, 0, to_tensor(ent1, 'cpu'))
+            embeds2 = torch.index_select(output_embeds, 0, to_tensor(ent2, 'cpu'))
+            embeds1 = nn.functional.normalize(embeds1, 2, 1)
+            embeds2 = nn.functional.normalize(embeds2, 2, 1)
+            embeds1 = embeds1.detach().cpu().numpy()
+            embeds2 = embeds2.detach().cpu().numpy()
             embeds_list1.append(embeds1)
             embeds_list2.append(embeds2)
         embeds1 = np.concatenate(embeds_list1, axis=1)
         embeds2 = np.concatenate(embeds_list2, axis=1)
-        mapping = self.mapping_mat.eval(session=self.session) if self.mapping_mat is not None else None
+        mapping = None
         return embeds1, embeds2, mapping
 
     def _eval_test_embeddings(self):
@@ -952,84 +950,34 @@ class AliNet(BasicModel):
         input_embeds = self.init_embedding
         output_embeds_list = self.output_embeds_list
         for output_embeds in [input_embeds] + output_embeds_list:
-            output_embeds = tf.nn.l2_normalize(output_embeds, 1)
-            embeds1 = tf.nn.embedding_lookup(output_embeds, ent1)
-            embeds2 = tf.nn.embedding_lookup(output_embeds, ent2)
-            embeds1 = tf.nn.l2_normalize(embeds1, 1)
-            embeds2 = tf.nn.l2_normalize(embeds2, 1)
-            embeds1 = np.array(embeds1.eval(session=self.session))
-            embeds2 = np.array(embeds2.eval(session=self.session))
+            output_embeds = nn.functional.normalize(output_embeds, 2, 1)
+            embeds1 = torch.index_select(output_embeds.cpu(), 0, to_tensor(ent1, 'cpu'))
+            embeds2 = torch.index_select(output_embeds.cpu(), 0, to_tensor(ent2, 'cpu'))
+            embeds1 = nn.functional.normalize(embeds1, 2, 1)
+            embeds2 = nn.functional.normalize(embeds2, 2, 1)
+            embeds1 = embeds1.detach().cpu().numpy()
+            embeds2 = embeds2.detach().cpu().numpy()
             embeds_list1.append(embeds1)
             embeds_list2.append(embeds2)
         embeds1 = np.concatenate(embeds_list1, axis=1)
         embeds2 = np.concatenate(embeds_list2, axis=1)
-        mapping = self.mapping_mat.eval(session=self.session) if self.mapping_mat is not None else None
+        mapping = None
         return embeds1, embeds2, mapping
-
-    def save(self):
-        embeds_list = list()
-        input_embeds = self.init_embedding
-        output_embeds_list = self.output_embeds_list
-        for output_embeds in [input_embeds] + output_embeds_list:
-            output_embeds = tf.nn.l2_normalize(output_embeds, 1)
-            output_embeds = np.array(output_embeds.eval(session=self.session))
-            embeds_list.append(output_embeds)
-        ent_embeds = np.concatenate(embeds_list, axis=1)
-        read.save_embeddings(self.out_folder, self.kgs, ent_embeds, None, None, mapping_mat=None)
-
-    # def save(self):
-    #     ent_embeds = self.init_embedding
-    #     rd.save_embeddings(self.out_folder, self.kgs, ent_embeds, None, None, mapping_mat=None)
-
-    def generate_input_batch(self, batch_size, neighbors1=None, neighbors2=None):
-        if batch_size > len(self.sup_ent1):
-            batch_size = len(self.sup_ent1)
-        index = np.random.choice(len(self.sup_ent1), batch_size)
-        pos_links = self.sup_links[index,]
-        neg_links = list()
-        if neighbors1 is None:
-            neg_ent1 = list()
-            neg_ent2 = list()
-            for i in range(self.args.neg_triple_num):
-                neg_ent1.extend(random.sample(self.sup_ent1 + self.ref_ent1, batch_size))
-                neg_ent2.extend(random.sample(self.sup_ent2 + self.ref_ent2, batch_size))
-            neg_links.extend([(neg_ent1[i], neg_ent2[i]) for i in range(len(neg_ent1))])
-        else:
-            for i in range(batch_size):
-                e1 = pos_links[i, 0]
-                candidates = random.sample(neighbors1.get(e1), self.args.neg_triple_num)
-                neg_links.extend([(e1, candidate) for candidate in candidates])
-                e2 = pos_links[i, 1]
-                candidates = random.sample(neighbors2.get(e2), self.args.neg_triple_num)
-                neg_links.extend([(candidate, e2) for candidate in candidates])
-        neg_links = set(neg_links) - self.sup_links_set
-        neg_links = neg_links - self.new_sup_links_set
-        neg_links = np.array(list(neg_links))
-        return pos_links, neg_links
-
-    def generate_rel_batch(self):
-        hs, rs, ts = list(), list(), list()
-        for r, hts in self.rel_ht_dict.items():
-            hts_batch = [random.choice(hts) for _ in range(self.rel_win_size)]
-            for h, t in hts_batch:
-                hs.append(h)
-                ts.append(t)
-                rs.append(r)
-        return hs, rs, ts
 
     def find_neighbors(self):
         if self.args.truncated_epsilon <= 0.0:
             return None, None
         start = time.time()
         output_embeds_list = self.output_embeds_list
+        # output_embeds_list = output_embeds_list.cpu()
         ents1 = self.sup_ent1 + self.ref_ent1
         ents2 = self.sup_ent2 + self.ref_ent2
-        embeds1 = tf.nn.embedding_lookup(output_embeds_list[-1], ents1)
-        embeds2 = tf.nn.embedding_lookup(output_embeds_list[-1], ents2)
-        embeds1 = tf.nn.l2_normalize(embeds1, 1)
-        embeds2 = tf.nn.l2_normalize(embeds2, 1)
-        embeds1 = np.array(embeds1.eval(session=self.session))
-        embeds2 = np.array(embeds2.eval(session=self.session))
+        embeds1 = torch.index_select(output_embeds_list[-1].cpu(), 0, to_tensor(ents1, 'cpu'))
+        embeds2 = torch.index_select(output_embeds_list[-1].cpu(), 0, to_tensor(ents2, 'cpu'))
+        embeds1 = nn.functional.normalize(embeds1, 2, 1)
+        embeds2 = nn.functional.normalize(embeds2, 2, 1)
+        embeds1 = embeds1.detach().cpu().numpy()
+        embeds2 = embeds2.detach().cpu().numpy()
         num = int((1 - self.args.truncated_epsilon) * len(ents1))
         print("neighbors num", num)
         neighbors1 = generate_neighbours(embeds1, ents1, embeds2, ents2, num,
@@ -1039,45 +987,21 @@ class AliNet(BasicModel):
         print('finding neighbors for sampling costs time: {:.4f}s'.format(time.time() - start))
         return neighbors1, neighbors2
 
-    def run(self):
-        flag1 = 0
-        flag2 = 0
-        steps = len(self.sup_ent2) // self.args.batch_size
-        neighbors1, neighbors2 = None, None
-        if steps == 0:
-            steps = 1
-        for epoch in range(1, self.args.max_epoch + 1):
-            start = time.time()
-            epoch_loss = 0.0
-            for step in range(steps):
-                self.pos_link_batch, self.neg_link_batch = self.generate_input_batch(self.args.batch_size,
-                                                                                     neighbors1=neighbors1,
-                                                                                     neighbors2=neighbors2)
-                fetches = {"loss": self.loss, "optimizer": self.optimizer}
-                if self.args.rel_param > 0:
-                    hs, _, ts = self.generate_rel_batch()
-                    feed_dict = {self.rel_pos_links: self.pos_link_batch,
-                                 self.rel_neg_links: self.neg_link_batch,
-                                 self.hs: hs,
-                                 self.ts: ts}
-                    results = self.session.run(fetches=fetches, feed_dict=feed_dict)
-                else:
-                    feed_dict = {self.pos_links: self.pos_link_batch,
-                                 self.neg_links: self.neg_link_batch}
-                    results = self.session.run(fetches=fetches, feed_dict=feed_dict)
-                batch_loss = results["loss"]
-                epoch_loss += batch_loss
-            print('epoch {}, loss: {:.4f}, cost time: {:.4f}s'.format(epoch, epoch_loss, time.time() - start))
-            if epoch % self.args.eval_freq == 0 and epoch >= self.args.start_valid:
-                flag = self.valid(self.args.stop_metric)
-                flag1, flag2, is_stop = early_stop(flag1, flag2, flag)
-                if self.args.no_early:
-                    is_stop = False
-                if is_stop:
-                    print("\n == training stop == \n")
-                    break
-                neighbors1, neighbors2 = self.find_neighbors()
-                if epoch >= self.args.start_augment * self.args.eval_freq:
-                    if self.args.sim_th > 0.0:
-                        self.augment_neighborhood()
-        self.save()
+    def save(self):
+        embeds_list = list()
+        input_embeds = self.init_embedding
+        output_embeds_list = self.output_embeds_list
+        for output_embeds in [input_embeds] + output_embeds_list:
+            output_embeds = nn.functional.normalize(output_embeds, 2, 1)
+            output_embeds = output_embeds.detach().cpu().numpy()
+            embeds_list.append(output_embeds)
+        ent_embeds = np.concatenate(embeds_list, axis=1)
+        read.save_embeddings(self.out_folder, self.kgs, ent_embeds, None, None, mapping_mat=None)
+
+    # def save(self):
+    #     ent_embeds = self.init_embedding
+    #     rd.save_embeddings(self.out_folder, self.kgs, ent_embeds, None, None, mapping_mat=None)
+
+
+
+

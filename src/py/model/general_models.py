@@ -23,6 +23,7 @@ class ModelFamily_tf(object):
         from src.tf.ea_models.iptranse import IPTransE
         from src.tf.ea_models.jape import JAPE
         from src.tf.ea_models.rsn4ea import RSN4EA
+        from src.tf.ea_models.alinet import AliNet
 
         if model_name == 'AttrE':
             return AttrE()
@@ -44,6 +45,8 @@ class ModelFamily_tf(object):
             return SEA()
         elif model_name == 'RSN4EA':
             return RSN4EA()
+        elif model_name == 'Alinet':
+            return AliNet()
 
         from src.tf.kge_models.Analogy import Analogy
         from src.tf.kge_models.transe import TransE
@@ -89,6 +92,7 @@ class ModelFamily_torch(object):
         from src.torch.ea_models.trainer.mtranse_trainer import mtranse_trainer
         from src.torch.ea_models.trainer.rdgcn_trainer import rdgcn_trainer
         from src.torch.ea_models.trainer.sea_trainer import sea_trainer
+        from src.torch.ea_models.trainer.alinet_trainer import alinet_trainer
         from src.torch.et_models.TransE_ET import TransE_ET
         from src.torch.et_models.RESCAL_ET import RESCAL_ET
         from src.torch.et_models.HolE_ET import HolE_ET
@@ -143,6 +147,8 @@ class ModelFamily_torch(object):
             return rdgcn_trainer()
         elif model_name == 'SEA':
             return sea_trainer()
+        elif model_name == 'Alinet':
+            return alinet_trainer()
         # self.SimplE = SimplE(kgs, args)
 
 
